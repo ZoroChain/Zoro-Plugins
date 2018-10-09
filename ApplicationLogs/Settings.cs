@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Zoro.Network.P2P;
 using System.Reflection;
 
 namespace Zoro.Plugins
@@ -17,7 +16,7 @@ namespace Zoro.Plugins
 
         public Settings(IConfigurationSection section)
         {
-            this.Path = string.Format(section.GetSection("Path").Value, Message.Magic.ToString("X8"));
+            this.Path = section.GetSection("Path").Value;
         }
     }
 }
