@@ -12,6 +12,7 @@ namespace Zoro.Plugins
         public int MaxTransactionsPerBlock { get; }
         public int MaxFreeTransactionsPerBlock { get; }
         public BlockedAccounts BlockedAccounts { get; }
+        public string[] DisabledLogSources { get; }
 
         public static Settings Default { get; }
 
@@ -25,6 +26,7 @@ namespace Zoro.Plugins
             this.MaxTransactionsPerBlock = GetValueOrDefault(section.GetSection("MaxTransactionsPerBlock"), 500, p => int.Parse(p));
             this.MaxFreeTransactionsPerBlock = GetValueOrDefault(section.GetSection("MaxFreeTransactionsPerBlock"), 20, p => int.Parse(p));
             this.BlockedAccounts = new BlockedAccounts(section.GetSection("BlockedAccounts"));
+            this.DisabledLogSources = section.GetSection("DisabledLogSources").GetChildren().Select(p => p.Value).ToArray();
         }
 
         public T GetValueOrDefault<T>(IConfigurationSection section, T defaultValue, Func<string, T> selector)

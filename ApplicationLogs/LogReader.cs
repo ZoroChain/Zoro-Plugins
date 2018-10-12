@@ -16,7 +16,7 @@ namespace Zoro.Plugins
         public LogReader(PluginManager pluginMgr)
             : base(pluginMgr)
         {            
-            string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), pluginMgr.ChainHash.ToArray().ToHexString());
+            string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), pluginMgr.ChainHash.ToString());
             db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
             pluginMgr.System.ActorSystem.ActorOf(Logger.Props(pluginMgr.System.Blockchain, db));

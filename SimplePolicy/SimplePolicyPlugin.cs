@@ -54,7 +54,8 @@ namespace Zoro.Plugins
 
         void ILogPlugin.Log(string source, LogLevel level, string message)
         {
-            if (source != nameof(ConsensusService)) return;
+            if (Settings.Default.DisabledLogSources.Contains(source))
+                return;
             DateTime now = DateTime.Now;
             string line = $"[{now.TimeOfDay:hh\\:mm\\:ss\\.fff}] {message}";
             Console.WriteLine(line);
