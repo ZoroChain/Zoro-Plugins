@@ -15,7 +15,7 @@ namespace Zoro.Plugins
         public SimplePolicyPlugin(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            log_dictionary = Path.Combine(AppContext.BaseDirectory, "Logs_" + pluginMgr.ChainHash.ToString());
+            log_dictionary = Path.Combine(AppContext.BaseDirectory, "Logs_" + pluginMgr.ChainHash.ToArray().Reverse().ToHexString());
         }
 
         public bool FilterForMemoryPool(Transaction tx)

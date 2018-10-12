@@ -4,6 +4,7 @@ using Zoro.IO.Json;
 using Zoro.Network.RPC;
 using Zoro.Network.P2P;
 using System.IO;
+using System.Linq;
 
 namespace Zoro.Plugins
 {
@@ -15,8 +16,8 @@ namespace Zoro.Plugins
 
         public LogReader(PluginManager pluginMgr)
             : base(pluginMgr)
-        {            
-            string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), pluginMgr.ChainHash.ToString());
+        {
+            string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), pluginMgr.ChainHash.ToArray().Reverse().ToHexString());
             db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
             pluginMgr.System.ActorSystem.ActorOf(Logger.Props(pluginMgr.System.Blockchain, db));
