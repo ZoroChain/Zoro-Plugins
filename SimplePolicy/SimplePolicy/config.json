@@ -6,6 +6,6 @@
       "Type": "AllowAll",
       "List": []
     },
-    "DisabledLogSources": [ "ConsensusService" ]
+    "DisabledLogSources": []
   }
 }

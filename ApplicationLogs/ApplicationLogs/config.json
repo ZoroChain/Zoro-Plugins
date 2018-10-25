@@ -1,5 +1,5 @@
 ﻿{
   "PluginConfiguration": {
-    "Path": "ApplicationLogs_{0}_{1}"
+    "Path": "ApplicationLogs/{0}_{1}"
   }
 }
