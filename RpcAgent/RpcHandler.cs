@@ -48,9 +48,7 @@ namespace Zoro
             if (system != null)
             {
                 Transaction tx = Transaction.DeserializeFrom(payload.Data);
-                RelayResultReason reason = RelayResultReason.Succeed;
-                system.Blockchain.Tell(tx);
-                //system.Blockchain.Ask<RelayResultReason>(tx).Result;
+                RelayResultReason reason = system.Blockchain.Ask<RelayResultReason>(tx).Result;
                 return reason;
             }
             return RelayResultReason.Invalid;
