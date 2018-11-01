@@ -1,0 +1,6 @@
+﻿{
+  "PluginConfiguration": {
+    "Port": 20333,
+    "MaxConnections": 10
+  }
+}
