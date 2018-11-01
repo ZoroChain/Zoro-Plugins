@@ -14,11 +14,8 @@ namespace Zoro
 {
     class RpcHandler
     {
-        private readonly Wallet wallet;
-
-        public RpcHandler(Wallet wallet)
+        public RpcHandler()
         {
-            this.wallet = wallet;
         }
 
         public JObject HandleRequest(RpcRequestPayload payload)
@@ -81,30 +78,7 @@ namespace Zoro
             {
                 json["stack"] = "error: recursive reference";
             }
-            if (wallet != null)
-            {
-                InvocationTransaction tx = new InvocationTransaction
-                {
-                    Version = 1,
-                    ChainHash = blockchain.ChainHash,
-                    Script = json["script"].AsString().HexToBytes(),
-                    Gas = Fixed8.Parse(json["gas_consumed"].AsString())
-                };
-                tx.Gas -= Fixed8.FromDecimal(10);
-                if (tx.Gas < Fixed8.Zero) tx.Gas = Fixed8.Zero;
-                tx.Gas = tx.Gas.Ceiling();
-                tx = wallet.MakeTransaction(tx);
-                if (tx != null)
-                {
-                    ContractParametersContext context = new ContractParametersContext(tx, blockchain);
-                    wallet.Sign(context);
-                    if (context.Completed)
-                        tx.Witnesses = context.GetWitnesses();
-                    else
-                        tx = null;
-                }
-                json["tx"] = tx?.ToArray().ToHexString();
-            }
+            
             return json;
         }
 

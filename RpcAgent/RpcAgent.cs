@@ -16,7 +16,7 @@ namespace Zoro.Plugins
         public RpcAgent(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            handler = new RpcHandler(null);
+            handler = new RpcHandler();
 
             var config = new TcpSocketServerConfiguration();
 
