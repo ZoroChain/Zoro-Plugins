@@ -16,6 +16,9 @@ namespace Zoro.Plugins
         public RpcAgent(PluginManager pluginMgr)
             : base(pluginMgr)
         {
+            if (pluginMgr.System != ZoroSystem.Root)
+                return;
+
             handler = new RpcHandler();
 
             var config = new TcpSocketServerConfiguration();
@@ -25,6 +28,8 @@ namespace Zoro.Plugins
             server.ClientDisconnected += server_ClientDisconnected;
             server.ClientDataReceived += server_ClientDataReceived;
             server.Listen();
+
+            Console.WriteLine(string.Format("Rpc agent is running on port {0}.", Settings.Default.Port));
         }
 
         public void Dispose()
