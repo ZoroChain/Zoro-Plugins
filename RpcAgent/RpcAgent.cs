@@ -32,7 +32,7 @@ namespace Zoro.Plugins
             Console.WriteLine(string.Format("Rpc agent is running on port {0}.", Settings.Default.Port));
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             server?.Shutdown();
         }
