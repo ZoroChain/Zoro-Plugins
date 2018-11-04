@@ -5,6 +5,7 @@ using Zoro.IO;
 using Zoro.IO.Json;
 using Zoro.Network.RPC;
 using Zoro.Network.P2P;
+using Zoro.Wallets;
 
 namespace Zoro.Plugins
 {
@@ -37,6 +38,11 @@ namespace Zoro.Plugins
             server?.Shutdown();
         }
 
+        public override void SetWallet(Wallet wallet)
+        {
+            handler.SetWallet(wallet);
+        }
+
         void server_ClientConnected(object sender, TcpClientConnectedEventArgs e)
         {
             //Console.WriteLine(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
@@ -56,9 +62,21 @@ namespace Zoro.Plugins
             {
                 RpcRequestPayload payload = msg.Payload.AsSerializable<RpcRequestPayload>();
 
+                ProcessRpcReuqest(e, payload);
+            }
+        }
+
+        private void ProcessRpcReuqest(TcpClientDataReceivedEventArgs e, RpcRequestPayload payload)
+        {
+            try
+            {
                 JObject result = handler.HandleRequest(payload);
 
                 SendRpcResponse(e.Session, payload.Guid, result);
+            }
+            catch (Exception exception)
+            {
+                SendRpcException(e.Session, payload.Guid, exception);
             }
         }
 
@@ -71,6 +89,14 @@ namespace Zoro.Plugins
             };
 
             Message msg = Message.Create("rpc-response", payload.ToArray());
+            server.SendTo(session, msg.ToArray());
+        }
+
+        private void SendRpcException(TcpSocketSession session, Guid guid, Exception exception)
+        {
+            RpcExceptionPayload payload = RpcExceptionPayload.Create(guid, exception);
+
+            Message msg = Message.Create("rpc-exception", payload.ToArray());
             server.SendTo(session, msg.ToArray());
         }
     }
