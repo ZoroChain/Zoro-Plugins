@@ -96,7 +96,7 @@ namespace Zoro.Plugins
         {
             RpcExceptionPayload payload = RpcExceptionPayload.Create(guid, exception);
 
-            Message msg = Message.Create("rpc-exception", payload.ToArray());
+            Message msg = Message.Create("rpc-error", payload.ToArray());
             server.SendTo(session, msg.ToArray());
         }
     }
