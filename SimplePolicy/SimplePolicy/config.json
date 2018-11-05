@@ -5,7 +5,6 @@
     "BlockedAccounts": {
       "Type": "AllowAll",
       "List": []
-    },
-    "DisabledLogSources": [ "ConsensusService", "Blockchain" ]
+    }
   }
 }
