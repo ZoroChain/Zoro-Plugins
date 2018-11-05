@@ -70,7 +70,7 @@ namespace Zoro.Plugins
         {
             try
             {
-                JObject result = handler.HandleRequest(payload);
+                JObject result = HandleRequest(payload);
 
                 SendRpcResponse(e.Session, payload.Guid, result);
             }
@@ -78,6 +78,33 @@ namespace Zoro.Plugins
             {
                 SendRpcException(e.Session, payload.Guid, exception);
             }
+        }
+
+
+        public JObject HandleRequest(RpcRequestPayload payload)
+        {
+            JArray _params = null;
+
+            try
+            {
+                JObject parameters = JArray.Parse(payload.Params);
+
+                if (parameters is JArray)
+                {
+                    _params = (JArray)parameters;
+                }
+            }
+            catch
+            {
+
+            }
+
+            if (_params == null)
+            {
+                throw new RpcException(-32602, "Error occurred when parsing parameters.");
+            }
+
+            return handler.Process(payload.Method, _params);
         }
 
         private void SendRpcResponse(TcpSocketSession session, Guid guid, JObject result)
