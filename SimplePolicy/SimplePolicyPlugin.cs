@@ -67,5 +67,55 @@ namespace Zoro.Plugins
                 File.AppendAllLines(path, new[] { line });
             }
         }
+
+        public override bool OnMessage(object message)
+        {
+            if (!(message is string[] args)) return false;
+            if (args[0] != "log") return false;
+            return OnLogCommand(args);
+        }
+
+        private bool OnLogCommand(string[] args)
+        {
+            switch (args[1].ToLower())
+            {
+                case "enable":
+                    return OnEnableLogCommand(args);
+                case "disable":
+                    return OnDisableLogCommand(args);
+                default:
+                    return false;
+            }
+        }
+
+        private bool OnEnableLogCommand(string[] args)
+        {
+            string source = args[2];
+            if (source == "all")
+            {
+                PluginManager.EnableLogAll();
+            }
+            else
+            {
+                PluginManager.EnableLogSource(source);
+            }
+
+            return true;
+        }
+
+        private bool OnDisableLogCommand(string[] args)
+        {
+            string source = args[2];
+            if (source == "all")
+            {
+                PluginManager.DisableLog();
+            }
+            else
+            {
+                PluginManager.DisableLogSource(source);
+            }
+
+            return true;
+        }
     }
 }
