@@ -1,4 +1,4 @@
-﻿using Zoro.Consensus;
+﻿using Zoro.Network.P2P;
 using Zoro.Network.P2P.Payloads;
 using Zoro.SmartContract;
 using System;
@@ -15,7 +15,9 @@ namespace Zoro.Plugins
         public SimplePolicyPlugin(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            log_dictionary = Path.Combine(AppContext.BaseDirectory, "Logs/" + pluginMgr.ChainHash.ToArray().Reverse().ToHexString());
+            string path = string.Format("Logs/{0}_{1}", Message.Magic.ToString("X8"), pluginMgr.ChainHash.ToString());
+
+            log_dictionary = Path.Combine(AppContext.BaseDirectory, path);
         }
 
         public bool FilterForMemoryPool(Transaction tx)
