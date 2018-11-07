@@ -1,15 +1,18 @@
 ﻿using Zoro.Ledger;
 using Zoro.Wallets;
-using Zoro.Cryptography.ECC;
+using System;
 
 namespace Zoro.Plugins
 {
     public class AppChainPlugin : Plugin
     {
-        private Wallet wallet;
+        public Wallet Wallet { get; private set; }
+
+        private CommandHandler cmdHander;
+        private EventHandler eventHandler;
+
         private ushort port = Settings.Default.Port;
         private ushort wsport = Settings.Default.WsPort;
-        private bool saveJson = Settings.Default.SaveJson;
 
         public AppChainPlugin(PluginManager pluginMgr)
             : base(pluginMgr)
@@ -17,67 +20,44 @@ namespace Zoro.Plugins
             if (pluginMgr.System != ZoroSystem.Root)
                 return;
 
-            if (port > 0 || wsport > 0)
-            {
-                Blockchain.AppChainNofity += OnAppChainEvent;
-            }
+            cmdHander = new CommandHandler(this);
+            eventHandler = new EventHandler(this);
+
+            Blockchain.AppChainNofity += OnAppChainEvent;
         }
 
         public override void SetWallet(Wallet wallet)
         {
-            this.wallet = wallet;
+            Wallet = wallet;
+        }
+
+        public bool NoWallet()
+        {
+            if (Wallet != null) return false;
+            Console.WriteLine("You have to open the wallet first.");
+            return true;
+        }
+
+        public void Log(string message)
+        {
+            PluginMgr.Log(nameof(AppChainPlugin), LogLevel.Info, message);
+        }
+
+        public override bool OnMessage(object message)
+        {
+            if (message is ZoroSystem.AppChainStarted evt)
+            {
+                eventHandler.OnAppChainStarted(evt.ChainHash, evt.Port, evt.WsPort);
+                return true;
+            }
+            if (!(message is string[] args)) return false;
+            if (args[0] != "appchain") return false;
+            return cmdHander.OnAppChainCommand(args);
         }
 
         private void OnAppChainEvent(object sender, AppChainEventArgs args)
         {
-            if (args.Method == "Create")
-            {
-                string hashString = args.State.Hash.ToString();
-                // 启动应用链
-                ZoroSystem.Root.StartAppChain(hashString, port, wsport);
-
-                bool startConsensus = false;
-
-                if (wallet != null)
-                {
-                    startConsensus = checkStartConsensus(args.State.StandbyValidators);
-
-                    if (startConsensus)
-                    {
-                        ZoroSystem.Root.StartAppChainConsensus(hashString, wallet);
-                    }
-                }
-
-                if (saveJson)
-                {
-                    AppChainSettings settings = new AppChainSettings(hashString, port, wsport, startConsensus);
-
-                    AppChainsSettings.Default.Chains.Add(hashString, settings);
-
-                    AppChainsSettings.Default.SaveJsonFile();
-                }
-
-                if (port > 0)
-                    port++;
-
-                if (wsport > 0)
-                    wsport++;
-            }
+            eventHandler.OnAppChainEvent(args);
         }
-
-        private bool checkStartConsensus(ECPoint[] Validators)
-        {
-            for (int i = 0; i < Validators.Length; i++)
-            {
-                WalletAccount account = wallet.GetAccount(Validators[i]);
-                if (account?.HasKey == true)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
     }
 }

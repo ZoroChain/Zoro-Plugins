@@ -2,6 +2,7 @@
   "PluginConfiguration": {
     "Port": 25001,
     "WsPort": 0,
-    "SaveJson": true
+    "SaveJson": true,
+    "KeyNames": [ "Test", "Demo" ]
   }
 }
