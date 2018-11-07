@@ -20,19 +20,31 @@ namespace Zoro.Plugins
 
         public bool OnAppChainCommand(string[] args)
         {
-            switch (args[1].ToLower())
-            {
-                case "create":
-                    return OnCreateAppChainCommand(args);
-                case "start":
-                    return OnStartAppChainCommand(args);
-                case "seedlist":
-                    return OnChangeAppChainSeedListCommand(args);
-                case "validators":
-                    return OnChangeAppChainValidatorsCommand(args);
+            string command = args[1].ToLower();
 
-                default:
-                    return false;
+            try
+            {
+                switch (command)
+                {
+                    case "create":
+                        return OnCreateAppChainCommand(args);
+                    case "start":
+                        return OnStartAppChainCommand(args);
+                    case "stop":
+                        return OnStopAppChainCommand(args);
+                    case "seedlist":
+                        return OnChangeAppChainSeedListCommand(args);
+                    case "validators":
+                        return OnChangeAppChainValidatorsCommand(args);
+
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                plugin.Log($"error occured when process appchain {command}." );
+                return true;
             }
         }
 
@@ -315,6 +327,17 @@ namespace Zoro.Plugins
 
                 AppChainsSettings.Default.SaveJsonFile();
             }
+
+            return true;
+        }
+
+        private bool OnStopAppChainCommand(string[] args)
+        {
+            string hashString = ReadString("appchain hash");
+
+            UInt160 chainHash = UInt160.Parse(hashString);
+
+            ZoroSystem.StopAppChainSystem(chainHash);
 
             return true;
         }

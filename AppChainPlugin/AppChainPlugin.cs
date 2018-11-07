@@ -38,9 +38,9 @@ namespace Zoro.Plugins
             return true;
         }
 
-        public void Log(string message)
+        public void Log(string message, LogLevel level = LogLevel.Info)
         {
-            PluginMgr.Log(nameof(AppChainPlugin), LogLevel.Info, message);
+            PluginMgr.Log(nameof(AppChainPlugin), level, message);
         }
 
         public override bool OnMessage(object message)
