@@ -15,7 +15,7 @@ namespace Zoro.Plugins
         public StatesDumper(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            blockchain = Blockchain.GetBlockchain(pluginMgr.ChainHash);
+            blockchain = ZoroSystem.AskBlockchain(pluginMgr.ChainHash);
         }
 
         public override bool OnMessage(object message)

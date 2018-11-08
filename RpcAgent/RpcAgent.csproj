@@ -18,8 +18,4 @@
     </None>
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy $(TargetDir)$(TargetName).dll ..\..\Zoro-Cli\zoro-cli\bin\$(ConfigurationName)\netcoreapp2.0\Plugins /y&#xD;&#xA;xcopy $(ProjectName)\config.json ..\..\Zoro-Cli\zoro-cli\bin\$(ConfigurationName)\netcoreapp2.0\Plugins\$(ProjectName)\ /y" />
-  </Target>
-
 </Project>
