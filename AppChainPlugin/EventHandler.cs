@@ -40,7 +40,7 @@ namespace Zoro.Plugins
                 // 通知正在运行的应用链对象，更新共识节点公钥
                 if (ZoroSystem.GetAppChainSystem(args.State.Hash, out ZoroSystem system))
                 {
-                    ZoroSystem.Root.Blockchain.Tell(new Blockchain.ChangeValidators { Validators = args.State.StandbyValidators });
+                    system.Blockchain.Tell(new Blockchain.ChangeValidators { Validators = args.State.StandbyValidators });
                 }
             }
             else if (args.Method == "ChangeSeedList")
