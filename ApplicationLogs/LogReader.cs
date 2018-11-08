@@ -23,6 +23,11 @@ namespace Zoro.Plugins
             pluginMgr.System.ActorSystem.ActorOf(Logger.Props(pluginMgr.System.Blockchain, db));
         }
 
+        public override void Dispose()
+        {
+            db.Dispose();
+        }
+
         public JObject OnProcess(HttpContext context, string method, JArray _params)
         {
             if (method != "getapplicationlog") return null;
