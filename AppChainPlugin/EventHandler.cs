@@ -22,10 +22,10 @@ namespace Zoro.Plugins
 
         public void OnAppChainStarted(UInt160 chainHash, int port, int wsport)
         {
-            if (this.port != 0)
+            if (this.port != 0 && port >= this.port)
                 this.port = port + 1;
 
-            if (this.wsport != 0)
+            if (this.wsport != 0 && wsport >= this.wsport)
                 this.wsport = wsport + 1;
         }
 
@@ -99,7 +99,7 @@ namespace Zoro.Plugins
 
             if (succeed && saveJson)
             {
-                if (AppChainsSettings.Default.AddSettings(hashString, (ushort)listenPort, (ushort)listenWsPort, startConsensus))
+                if (AppChainsSettings.Default.AddSettings(args.State.Hash, (ushort)listenPort, (ushort)listenWsPort, startConsensus))
                 {
                     AppChainsSettings.Default.SaveJsonFile();
 

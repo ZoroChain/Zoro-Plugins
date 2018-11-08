@@ -332,7 +332,8 @@ namespace Zoro.Plugins
 
             if (succeed && saveJson)
             {
-                if (AppChainsSettings.Default.AddSettings(hashString, port, wsport, startConsensus))
+                UInt160 chainHash = UInt160.Parse(hashString);
+                if (AppChainsSettings.Default.AddSettings(chainHash, port, wsport, startConsensus))
                 {
                     AppChainsSettings.Default.SaveJsonFile();
 
