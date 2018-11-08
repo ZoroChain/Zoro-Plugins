@@ -79,6 +79,10 @@ namespace Zoro.Plugins
         {
             switch (args[1].ToLower())
             {
+                case "on":
+                    return OnLogOnCommand();
+                case "off":
+                    return OnLogOffCommand();
                 case "enable":
                     return OnEnableLogCommand(args);
                 case "disable":
@@ -88,12 +92,24 @@ namespace Zoro.Plugins
             }
         }
 
+        private bool OnLogOnCommand()
+        {
+            PluginManager.EnableLog(true);
+            return true;
+        }
+
+        private bool OnLogOffCommand()
+        {
+            PluginManager.EnableLog(false);
+            return true;
+        }
+
         private bool OnEnableLogCommand(string[] args)
         {
             string source = args[2];
             if (source == "all")
             {
-                PluginManager.EnableLogAll();
+                PluginManager.EnableAllLogSources();
             }
             else
             {
@@ -105,16 +121,7 @@ namespace Zoro.Plugins
 
         private bool OnDisableLogCommand(string[] args)
         {
-            string source = args[2];
-            if (source == "all")
-            {
-                PluginManager.DisableLog();
-            }
-            else
-            {
-                PluginManager.DisableLogSource(source);
-            }
-
+            PluginManager.DisableLogSource(args[2]);
             return true;
         }
     }
