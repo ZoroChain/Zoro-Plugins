@@ -5,12 +5,14 @@ using Zoro.Network.RPC;
 using Zoro.Network.P2P;
 using System.IO;
 using System.Linq;
+using Akka.Actor;
 
 namespace Zoro.Plugins
 {
     public class LogReader : Plugin, IRpcPlugin
     {
         private readonly DB db;
+        private IActorRef logger;
 
         public override string Name => "ApplicationLogs";
 
@@ -20,11 +22,12 @@ namespace Zoro.Plugins
             string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), pluginMgr.ChainHash.ToArray().Reverse().ToHexString());
             db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
-            pluginMgr.System.ActorSystem.ActorOf(Logger.Props(pluginMgr.System.Blockchain, db));
+            logger = pluginMgr.System.ActorSystem.ActorOf(Logger.Props(pluginMgr.System.Blockchain, db));
         }
 
         public override void Dispose()
         {
+            PluginMgr.System.ActorSystem.Stop(logger);
             db.Dispose();
         }
 
