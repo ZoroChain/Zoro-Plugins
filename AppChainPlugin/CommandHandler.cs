@@ -309,23 +309,39 @@ namespace Zoro.Plugins
             string hashString = ReadString("appchain hash");
             ushort port = (ushort)ReadInt("port");
             ushort wsport = (ushort)ReadInt("websocket port");
-            int startConsensus = ReadInt("start consensus");
-            int save = ReadInt("save to json file");
+            bool startConsensus = ReadInt("start consensus") == 1;
+            bool saveJson = ReadInt("save to json file") == 1;
 
-            bool exists = ZoroSystem.Root.StartAppChain(hashString, port, wsport);
+            bool succeed = ZoroSystem.Root.StartAppChain(hashString, port, wsport);
 
-            if (startConsensus == 1 && plugin.Wallet != null)
+            if (succeed)
             {
-                ZoroSystem.Root.StartAppChainConsensus(hashString, plugin.Wallet);
+                Console.WriteLine($"starting appchain, hash={hashString}");
+            }
+            else
+            {
+                Console.WriteLine($"failed to start appchain, hash={hashString}");
             }
 
-            if (exists && save == 1)
+            if (startConsensus && plugin.Wallet != null)
             {
-                AppChainSettings settings = new AppChainSettings(hashString, port, wsport, startConsensus == 1);
+                ZoroSystem.Root.StartAppChainConsensus(hashString, plugin.Wallet);
 
-                AppChainsSettings.Default.Chains.Add(hashString, settings);
+                Console.WriteLine($"starting consensus service, hash={hashString}");
+            }
 
-                AppChainsSettings.Default.SaveJsonFile();
+            if (succeed && saveJson)
+            {
+                if (AppChainsSettings.Default.AddSettings(hashString, port, wsport, startConsensus))
+                {
+                    AppChainsSettings.Default.SaveJsonFile();
+
+                    Console.WriteLine($"save to json file, hash={hashString}");
+                }
+                else
+                {
+                    Console.WriteLine($"already exists in json file, hash={hashString}");
+                }
             }
 
             return true;
@@ -337,7 +353,16 @@ namespace Zoro.Plugins
 
             UInt160 chainHash = UInt160.Parse(hashString);
 
-            ZoroSystem.StopAppChainSystem(chainHash);
+            bool succeed = ZoroSystem.StopAppChainSystem(chainHash);
+
+            if (succeed)
+            {
+                Console.WriteLine($"stopping appchain, hash={hashString}");
+            }
+            else
+            {
+                Console.WriteLine($"failed to stop appchain, hash={hashString}");
+            }
 
             return true;
         }

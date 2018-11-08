@@ -55,8 +55,6 @@ namespace Zoro.Plugins
 
         private void OnAppChainCreated(AppChainEventArgs args)
         {
-            plugin.Log($"OnAppChainCreated, name={args.State.Name} hash={args.State.Hash}");
-
             if (!CheckAppChainPort())
             {
                 plugin.Log($"failed to check appchain port, name={args.State.Name} hash={args.State.Hash}");
@@ -74,9 +72,13 @@ namespace Zoro.Plugins
             int listenPort = port;
             int listenWsPort = wsport;
 
-            bool exists = ZoroSystem.Root.StartAppChain(hashString, port, wsport);
+            bool succeed = ZoroSystem.Root.StartAppChain(hashString, port, wsport);
 
-            if (!exists)
+            if (succeed)
+            {
+                plugin.Log($"starting appchain, name={args.State.Name} hash={args.State.Hash}");
+            }
+            else
             {
                 plugin.Log($"failed to start appchain, name={args.State.Name} hash={args.State.Hash}");
             }
@@ -90,18 +92,23 @@ namespace Zoro.Plugins
                 if (startConsensus)
                 {
                     ZoroSystem.Root.StartAppChainConsensus(hashString, plugin.Wallet);
+
+                    plugin.Log($"starting consensus service, name={args.State.Name} hash={args.State.Hash}");
                 }
             }
 
-            if (exists && saveJson)
+            if (succeed && saveJson)
             {
-                AppChainSettings settings = new AppChainSettings(hashString, (ushort)listenPort, (ushort)listenWsPort, startConsensus);
+                if (AppChainsSettings.Default.AddSettings(hashString, (ushort)listenPort, (ushort)listenWsPort, startConsensus))
+                {
+                    AppChainsSettings.Default.SaveJsonFile();
 
-                AppChainsSettings.Default.Chains.Add(hashString, settings);
-
-                AppChainsSettings.Default.SaveJsonFile();
-
-                plugin.Log($"save to appchain.json, name={args.State.Name} hash={args.State.Hash} port={listenPort} wsport={listenWsPort}");
+                    plugin.Log($"save to json file, name={args.State.Name} hash={args.State.Hash} port={listenPort} wsport={listenWsPort}");
+                }
+                else
+                {
+                    plugin.Log($"already exists in json file, name={args.State.Name} hash={args.State.Hash} port={listenPort} wsport={listenWsPort}");
+                }
             }
         }
 
