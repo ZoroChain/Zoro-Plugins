@@ -3,30 +3,19 @@ using Zoro.Ledger;
 using Zoro.Wallets;
 using Zoro.Network.P2P;
 using Zoro.Cryptography.ECC;
-using System;
 
 namespace Zoro.Plugins
 {
     internal class EventHandler
     {
         private AppChainPlugin plugin;
-        private int port = Settings.Default.Port;
-        private int wsport = Settings.Default.WsPort;
+
         private bool saveJson = Settings.Default.SaveJson;
         private string[] keyNames = Settings.Default.KeyNames;
 
         public EventHandler(AppChainPlugin plugin)
         {
             this.plugin = plugin;
-        }
-
-        public void OnAppChainStarted(UInt160 chainHash, int port, int wsport)
-        {
-            if (this.port != 0 && port >= this.port)
-                this.port = port + 1;
-
-            if (this.wsport != 0 && wsport >= this.wsport)
-                this.wsport = wsport + 1;
         }
 
         public void OnAppChainEvent(AppChainEventArgs args)
@@ -57,30 +46,33 @@ namespace Zoro.Plugins
         {
             if (!CheckAppChainPort())
             {
-                plugin.Log($"failed to check appchain port, name={args.State.Name} hash={args.State.Hash}");
+                plugin.Log($"No appchain will be started because all listen ports are zero, name={args.State.Name} hash={args.State.Hash}");
                 return;
             }
 
             if (!CheckAppChainName(args.State.Name.ToLower()))
             {
-                plugin.Log($"failed to check appchain key name, name={args.State.Name} hash={args.State.Hash}");
+                plugin.Log($"The appchain is not in the key name list, name={args.State.Name} hash={args.State.Hash}");
                 return;
             }
                 
             string hashString = args.State.Hash.ToString();
 
-            int listenPort = port;
-            int listenWsPort = wsport;
+            if (!ListenPortManager.GetAppChainListenPort(args.State.SeedList, out int listenPort, out int listenWsPort))
+            {
+                plugin.Log($"The specified listen port is already in used, name={args.State.Name} hash={args.State.Hash}, port={listenPort}");
+                return;
+            }
 
-            bool succeed = ZoroSystem.Root.StartAppChain(hashString, port, wsport);
+            bool succeed = ZoroSystem.Root.StartAppChain(hashString, listenPort, listenWsPort);
 
             if (succeed)
             {
-                plugin.Log($"starting appchain, name={args.State.Name} hash={args.State.Hash}");
+                plugin.Log($"Starting appchain, name={args.State.Name} hash={args.State.Hash} port={listenPort} wsport={listenWsPort}");
             }
             else
             {
-                plugin.Log($"failed to start appchain, name={args.State.Name} hash={args.State.Hash}");
+                plugin.Log($"Failed to start appchain, name={args.State.Name} hash={args.State.Hash}");
             }
 
             bool startConsensus = false;
@@ -93,7 +85,7 @@ namespace Zoro.Plugins
                 {
                     ZoroSystem.Root.StartAppChainConsensus(hashString, plugin.Wallet);
 
-                    plugin.Log($"starting consensus service, name={args.State.Name} hash={args.State.Hash}");
+                    plugin.Log($"Starting consensus service, name={args.State.Name} hash={args.State.Hash}");
                 }
             }
 
@@ -103,11 +95,11 @@ namespace Zoro.Plugins
                 {
                     AppChainsSettings.Default.SaveJsonFile();
 
-                    plugin.Log($"save to json file, name={args.State.Name} hash={args.State.Hash} port={listenPort} wsport={listenWsPort}");
+                    plugin.Log($"Save to json file, name={args.State.Name} hash={args.State.Hash} port={listenPort} wsport={listenWsPort}");
                 }
                 else
                 {
-                    plugin.Log($"already exists in json file, name={args.State.Name} hash={args.State.Hash} port={listenPort} wsport={listenWsPort}");
+                    plugin.Log($"The identical config item is already exists in json file, name={args.State.Name} hash={args.State.Hash} port={listenPort} wsport={listenWsPort}");
                 }
             }
         }

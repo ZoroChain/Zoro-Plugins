@@ -45,9 +45,9 @@ namespace Zoro.Plugins
 
         public override bool OnMessage(object message)
         {
-            if (message is ZoroSystem.AppChainStarted evt)
+            if (message is ZoroSystem.ChainStarted evt)
             {
-                eventHandler.OnAppChainStarted(evt.ChainHash, evt.Port, evt.WsPort);
+                ListenPortManager.OnChainStarted(evt.ChainHash, evt.Port, evt.WsPort);
                 return true;
             }
             if (!(message is string[] args)) return false;
