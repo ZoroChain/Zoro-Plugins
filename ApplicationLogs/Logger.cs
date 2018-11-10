@@ -19,6 +19,11 @@ namespace Zoro.Plugins
             blockchain.Tell(new Blockchain.Register());
         }
 
+        protected override void PostStop()
+        {
+            db.Dispose();
+        }
+
         protected override void OnReceive(object message)
         {
             if (message is Blockchain.ApplicationExecuted e)

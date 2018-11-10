@@ -28,12 +28,12 @@ namespace Zoro.Plugins
         public override void Dispose()
         {
             PluginMgr.System.ActorSystem.Stop(logger);
-            db.Dispose();
         }
 
         public JObject OnProcess(HttpContext context, string method, JArray _params)
         {
             if (method != "getapplicationlog") return null;
+            if (db.IsDisposed) return null;
             UInt256 hash = UInt256.Parse(_params[0].AsString());
             if (!db.TryGet(ReadOptions.Default, hash.ToArray(), out Slice value))
                 throw new RpcException(-100, "Unknown transaction");
