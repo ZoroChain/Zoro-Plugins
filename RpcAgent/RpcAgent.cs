@@ -23,6 +23,7 @@ namespace Zoro.Plugins
             handler = new RpcHandler();
 
             var config = new TcpSocketServerConfiguration();
+            config.AllowNatTraversal = false;
 
             server = new TcpSocketServer(Settings.Default.Port, config);
             server.ClientConnected += server_ClientConnected;
