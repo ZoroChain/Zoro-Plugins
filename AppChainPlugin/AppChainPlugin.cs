@@ -1,6 +1,9 @@
-﻿using Zoro.Ledger;
+﻿using System;
+using Akka.Actor;
+using Zoro.Ledger;
 using Zoro.Wallets;
-using System;
+using Zoro.Network.P2P;
+using Zoro.Cryptography.ECC;
 
 namespace Zoro.Plugins
 {
@@ -9,19 +12,13 @@ namespace Zoro.Plugins
         public Wallet Wallet { get; private set; }
 
         private CommandHandler cmdHander;
-        private EventHandler eventHandler;
-
-        private ushort port = Settings.Default.Port;
-        private ushort wsport = Settings.Default.WsPort;
+        private AppChainManager appchainMgr;
 
         public AppChainPlugin(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            if (pluginMgr.System != ZoroSystem.Root)
-                return;
-
             cmdHander = new CommandHandler(this);
-            eventHandler = new EventHandler(this);
+            appchainMgr = new AppChainManager(this);
 
             Blockchain.AppChainNofity += OnAppChainEvent;
         }
@@ -40,14 +37,15 @@ namespace Zoro.Plugins
 
         public void Log(string message, LogLevel level = LogLevel.Info)
         {
-            PluginMgr.Log(nameof(AppChainPlugin), level, message);
+            PluginMgr.Log(nameof(AppChainPlugin), level, message, UInt160.Zero);
         }
 
         public override bool OnMessage(object message)
         {
             if (message is ZoroSystem.ChainStarted evt)
             {
-                ListenPortManager.OnChainStarted(evt.ChainHash, evt.Port, evt.WsPort);
+                appchainMgr.OnChainStarted(evt.ChainHash, evt.Port, evt.WsPort);
+
                 return true;
             }
             if (!(message is string[] args)) return false;
@@ -57,7 +55,26 @@ namespace Zoro.Plugins
 
         private void OnAppChainEvent(object sender, AppChainEventArgs args)
         {
-            eventHandler.OnAppChainEvent(args);
+            if (args.Method == "Create")
+            {
+                appchainMgr.OnAppChainCreated(args);
+            }
+            else if (args.Method == "ChangeValidators")
+            {
+                // 通知正在运行的应用链对象，更新共识节点公钥
+                if (ZoroSystem.GetAppChainSystem(args.State.Hash, out ZoroSystem system))
+                {
+                    system.Blockchain.Tell(new Blockchain.ChangeValidators { Validators = args.State.StandbyValidators });
+                }
+            }
+            else if (args.Method == "ChangeSeedList")
+            {
+                // 通知正在运行的应用链对象，更新种子节点地址
+                if (ZoroSystem.GetAppChainSystem(args.State.Hash, out ZoroSystem system))
+                {
+                    system.LocalNode.Tell(new LocalNode.ChangeSeedList { SeedList = args.State.SeedList });
+                }
+            }
         }
     }
 }

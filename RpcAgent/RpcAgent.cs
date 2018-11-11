@@ -17,9 +17,6 @@ namespace Zoro.Plugins
         public RpcAgent(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            if (pluginMgr.System != ZoroSystem.Root)
-                return;
-
             handler = new RpcHandler();
 
             var config = new TcpSocketServerConfiguration();
@@ -46,7 +43,15 @@ namespace Zoro.Plugins
 
         void server_ClientConnected(object sender, TcpClientConnectedEventArgs e)
         {
-            //Console.WriteLine(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
+            int count = server.SessionCount;
+            if (count >= Settings.Default.MaxConnections)
+            {
+                throw new InvalidOperationException($"The maximum number of connections has been exceeded {count}.");
+            }
+            else
+            {
+                //Console.WriteLine(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
+            }
         }
 
         void server_ClientDisconnected(object sender, TcpClientDisconnectedEventArgs e)

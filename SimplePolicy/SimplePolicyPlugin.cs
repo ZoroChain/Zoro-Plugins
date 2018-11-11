@@ -3,6 +3,7 @@ using Zoro.Network.P2P.Payloads;
 using Zoro.SmartContract;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 
@@ -10,14 +11,11 @@ namespace Zoro.Plugins
 {
     public class SimplePolicyPlugin : Plugin, ILogPlugin, IPolicyPlugin
     {
-        private string log_dictionary;
+        private ConcurrentDictionary<UInt160, string> log_dicts = new ConcurrentDictionary<UInt160, string>();
 
         public SimplePolicyPlugin(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            string path = string.Format("Logs/{0}_{1}", Message.Magic.ToString("X8"), pluginMgr.ChainHash.ToString());
-
-            log_dictionary = Path.Combine(AppContext.BaseDirectory, path);
         }
 
         public bool FilterForMemoryPool(Transaction tx)
@@ -54,11 +52,12 @@ namespace Zoro.Plugins
                     yield return tx;
         }
 
-        void ILogPlugin.Log(string source, LogLevel level, string message)
+        void ILogPlugin.Log(string source, LogLevel level, string message, UInt160 chainHash)
         {
             DateTime now = DateTime.Now;
             string line = $"[{now.TimeOfDay:hh\\:mm\\:ss\\.fff}] {message}";
             Console.WriteLine(line);
+            string log_dictionary = GetLogDictionary(chainHash);
             if (string.IsNullOrEmpty(log_dictionary)) return;
             lock (log_dictionary)
             {
@@ -66,6 +65,20 @@ namespace Zoro.Plugins
                 string path = Path.Combine(log_dictionary, $"{now:yyyy-MM-dd}.log");
                 File.AppendAllLines(path, new[] { line });
             }
+        }
+
+        string GetLogDictionary(UInt160 chainHash)
+        {
+            if (!log_dicts.TryGetValue(chainHash, out string log_dictionary))
+            {
+                string path = string.Format("Logs/{0}_{1}", Message.Magic.ToString("X8"), chainHash.ToString());
+
+                log_dictionary = Path.Combine(AppContext.BaseDirectory, path);
+
+                log_dicts.TryAdd(chainHash, log_dictionary);
+            }
+
+            return log_dictionary;
         }
 
         public override bool OnMessage(object message)

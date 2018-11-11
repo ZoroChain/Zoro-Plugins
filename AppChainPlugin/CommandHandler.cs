@@ -43,7 +43,7 @@ namespace Zoro.Plugins
             }
             catch (Exception)
             {
-                plugin.Log($"error occured when process appchain {command}." );
+                plugin.Log($"Error occured when process appchain command [{command}]." );
                 return true;
             }
         }
@@ -309,40 +309,24 @@ namespace Zoro.Plugins
             string hashString = ReadString("appchain hash");
             ushort port = (ushort)ReadInt("port");
             ushort wsport = (ushort)ReadInt("websocket port");
-            bool startConsensus = ReadInt("start consensus") == 1;
-            bool saveJson = ReadInt("save to json file") == 1;
+            int startConsensus = ReadInt("start consensus");
 
             bool succeed = ZoroSystem.Root.StartAppChain(hashString, port, wsport);
 
             if (succeed)
             {
-                Console.WriteLine($"starting appchain, hash={hashString}");
+                Console.WriteLine($"Starting appchain, hash={hashString}");
             }
             else
             {
-                Console.WriteLine($"failed to start appchain, hash={hashString}");
+                Console.WriteLine($"Failed to start appchain, hash={hashString}");
             }
 
-            if (startConsensus && plugin.Wallet != null)
+            if (startConsensus == 1 && plugin.Wallet != null)
             {
                 ZoroSystem.Root.StartAppChainConsensus(hashString, plugin.Wallet);
 
-                Console.WriteLine($"starting consensus service, hash={hashString}");
-            }
-
-            if (succeed && saveJson)
-            {
-                UInt160 chainHash = UInt160.Parse(hashString);
-                if (AppChainsSettings.Default.AddSettings(chainHash, port, wsport, startConsensus))
-                {
-                    AppChainsSettings.Default.SaveJsonFile();
-
-                    Console.WriteLine($"save to json file, hash={hashString}");
-                }
-                else
-                {
-                    Console.WriteLine($"already exists in json file, hash={hashString}");
-                }
+                Console.WriteLine($"Starting consensus service, hash={hashString}");
             }
 
             return true;
@@ -358,11 +342,11 @@ namespace Zoro.Plugins
 
             if (succeed)
             {
-                Console.WriteLine($"stopping appchain, hash={hashString}");
+                Console.WriteLine($"Stopping appchain, hash={hashString}");
             }
             else
             {
-                Console.WriteLine($"failed to stop appchain, hash={hashString}");
+                Console.WriteLine($"Failed to stop appchain, hash={hashString}");
             }
 
             return true;

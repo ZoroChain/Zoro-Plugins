@@ -20,7 +20,7 @@ namespace Zoro.Plugins
         public ImportBlocks(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            blockchain = ZoroSystem.AskBlockchain(pluginMgr.ChainHash);
+            blockchain = Blockchain.Root;
 
             Task.Run(() =>
             {
