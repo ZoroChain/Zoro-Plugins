@@ -1,6 +1,7 @@
 ﻿using Zoro.IO;
 using Zoro.IO.Json;
 using Zoro.Ledger;
+using Zoro.AppChain;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -56,7 +57,7 @@ namespace Zoro.Plugins
         {
             if (TryParseChainHash(hashString, out UInt160 chainHash))
             {
-                Blockchain blockchain = ZoroSystem.GetBlockchain(chainHash);
+                Blockchain blockchain = AppChainManager.Singleton.GetBlockchain(chainHash);
                 return blockchain;
             }
             else
