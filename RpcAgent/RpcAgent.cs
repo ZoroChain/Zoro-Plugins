@@ -23,9 +23,9 @@ namespace Zoro.Plugins
             config.AllowNatTraversal = false;
 
             server = new TcpSocketServer(Settings.Default.Port, config);
-            server.ClientConnected += server_ClientConnected;
-            server.ClientDisconnected += server_ClientDisconnected;
-            server.ClientDataReceived += server_ClientDataReceived;
+            server.ClientConnected += OnClientConnected;
+            server.ClientDisconnected += OnClientDisconnected;
+            server.ClientDataReceived += OnClientDataReceived;
             server.Listen();
 
             Console.WriteLine(string.Format("Rpc agent is running on port {0}.", Settings.Default.Port));
@@ -41,7 +41,12 @@ namespace Zoro.Plugins
             handler.SetWallet(wallet);
         }
 
-        void server_ClientConnected(object sender, TcpClientConnectedEventArgs e)
+        void Log(string message)
+        {
+            PluginMgr.Log(nameof(RpcAgent), LogLevel.Info, message, UInt160.Zero);
+        }
+
+        void OnClientConnected(object sender, TcpClientConnectedEventArgs e)
         {
             int count = server.SessionCount;
             if (count >= Settings.Default.MaxConnections)
@@ -50,16 +55,16 @@ namespace Zoro.Plugins
             }
             else
             {
-                //Console.WriteLine(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
+                Log(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
             }
         }
 
-        void server_ClientDisconnected(object sender, TcpClientDisconnectedEventArgs e)
+        void OnClientDisconnected(object sender, TcpClientDisconnectedEventArgs e)
         {
-            //Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session));
+            Log(string.Format("TCP client {0} has disconnected.", e.Session));
         }
 
-        void server_ClientDataReceived(object sender, TcpClientDataReceivedEventArgs e)
+        void OnClientDataReceived(object sender, TcpClientDataReceivedEventArgs e)
         {
             ; byte[] data = e.Data.Skip(e.DataOffset).Take(e.DataLength).ToArray();
             Message msg = data.AsSerializable<Message>();
