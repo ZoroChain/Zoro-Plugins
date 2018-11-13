@@ -16,16 +16,20 @@ namespace Zoro.Plugins
         public Logger(IActorRef blockchain, DB db)
         {
             this.db = db;
+            
+            // 注册Blockchain的分发事件
             blockchain.Tell(new Blockchain.Register());
         }
 
         protected override void PostStop()
         {
+            // 关闭对应的ApplicationLog数据库
             db.Dispose();
         }
 
         protected override void OnReceive(object message)
         {
+            // 处理Blockchain发来的消息通知
             if (message is Blockchain.ApplicationExecuted e)
             {
                 JObject json = new JObject();

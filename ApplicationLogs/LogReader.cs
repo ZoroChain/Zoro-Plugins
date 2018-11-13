@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Zoro.IO.Data.LevelDB;
 using Zoro.IO.Json;
+using Zoro.AppChain;
 using Zoro.Network.RPC;
 using Zoro.Network.P2P;
 using System.IO;
@@ -30,11 +31,19 @@ namespace Zoro.Plugins
             }
         }
 
+        // 处理ZoroSystem发来的消息通知
         public override bool OnMessage(object message)
         {
-            if (message is ZoroSystem.ChainStarted evt)
+            if (message is ZoroSystem.ChainStarted started)
             {
-                CreateLogger(evt.ChainHash);
+                // 每次有一条链启动时，打开对应的ApplicationLog数据库文件
+                CreateLogger(started.ChainHash);
+                return true;
+            }
+            else if (message is ZoroSystem.ChainStopped stopped)
+            {
+                // 每次有一条链关闭时，结束对应的Actor对象，并关闭对应的ApplicationLog数据库
+                StopLogger(stopped.ChainHash);
                 return true;
             }
             return false;
@@ -44,15 +53,35 @@ namespace Zoro.Plugins
         {
             if (!loggers.ContainsKey(chainHash))
             {
-                string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), chainHash.ToArray().Reverse().ToHexString());
-                DB db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
+                // 根据链的Hash，获取对应的ZoroSystem对象
+                if (AppChainManager.Singleton.GetAppChainSystem(chainHash, out ZoroSystem system))
+                {
+                    // 用MagicNumber加上ChainHash作为ApplicationLog数据库的文件名
+                    string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), chainHash.ToArray().Reverse().ToHexString());
+                    DB db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
-                IActorRef logger = PluginMgr.System.ActorSystem.ActorOf(Logger.Props(PluginMgr.System.Blockchain, db));
-                loggers.TryAdd(chainHash, logger);
-                dbs.TryAdd(chainHash, db);
+                    // 创建Actor对象来处理Blockchain发来的消息通知
+                    IActorRef logger = PluginMgr.System.ActorSystem.ActorOf(Logger.Props(system.Blockchain, db));
+
+                    // 记录创建的Actor和Db对象
+                    loggers.TryAdd(chainHash, logger);
+                    dbs.TryAdd(chainHash, db);
+                }
             }
         }
 
+        private void StopLogger(UInt160 chainHash)
+        {
+            if (loggers.TryRemove(chainHash, out IActorRef logger))
+            {
+                // 停止Actor对象
+                PluginMgr.System.ActorSystem.Stop(logger);
+            }
+
+            dbs.TryRemove(chainHash, out DB db);
+        }
+
+        // 根据ChainHash，获取对应的Db对象
         private bool TryGetDB(JObject param, out DB db)
         {
             UInt160 chainHash;
@@ -68,7 +97,8 @@ namespace Zoro.Plugins
 
             return dbs.TryGetValue(chainHash, out db);
         }
-
+        
+        // 第一个参数是ChainHash，第二个参数是交易Id
         public JObject OnProcess(HttpContext context, string method, JArray _params)
         {
             if (method != "getapplicationlog") return null;
