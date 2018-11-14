@@ -61,7 +61,7 @@ namespace Zoro.Plugins
                     DB db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
                     // 创建Actor对象来处理Blockchain发来的消息通知
-                    IActorRef logger = PluginMgr.System.ActorSystem.ActorOf(Logger.Props(system.Blockchain, db));
+                    IActorRef logger = PluginMgr.System.ActorSystem.ActorOf(Logger.Props(system.Blockchain, db), "ApplicationLogs_" + chainHash.ToString());
 
                     // 记录创建的Actor和Db对象
                     loggers.TryAdd(chainHash, logger);
