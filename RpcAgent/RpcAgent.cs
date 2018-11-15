@@ -95,7 +95,7 @@ namespace Zoro.Plugins
         public JObject HandleRequest(RpcRequestPayload payload)
         {
             JArray _params = null;
-
+            
             try
             {
                 JObject parameters = JArray.Parse(payload.Params);
@@ -115,7 +115,12 @@ namespace Zoro.Plugins
                 throw new RpcException(-32602, "Error occurred when parsing parameters.");
             }
 
-            return handler.Process(payload.Method, _params);
+            JObject result = PluginManager.Singleton.ProcessRpcMethod(null, payload.Method, _params);
+
+            if (result == null)
+                result = handler.Process(payload.Method, _params);
+
+            return result;
         }
 
         private void SendRpcResponse(TcpSocketSession session, Guid guid, JObject result)
