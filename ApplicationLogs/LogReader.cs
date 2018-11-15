@@ -59,6 +59,9 @@ namespace Zoro.Plugins
                 {
                     // 用MagicNumber加上ChainHash作为ApplicationLog数据库的文件名
                     string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), chainHash.ToArray().Reverse().ToHexString());
+
+                    Directory.CreateDirectory(path);
+
                     DB db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
                     // 创建Actor对象来处理Blockchain发来的消息通知
