@@ -33,7 +33,8 @@ namespace Zoro.Plugins
 
         private void DumpStorage(string[] args)
         {
-            Blockchain blockchain = GetBlockchain(args[2]);
+            // 用输入的第三个参数，获取Blockchain对象
+            Blockchain blockchain = AppChainManager.Singleton.GetBlockchain(args[2]);
             Dump(blockchain, args.Length >= 4 ? blockchain.Store.GetStorages().Find(UInt160.Parse(args[3]).ToArray()) : blockchain.Store.GetStorages().Find());
         }
 
@@ -50,31 +51,7 @@ namespace Zoro.Plugins
                 return state;
             }));
             File.WriteAllText(path, array.ToString());
-            Console.WriteLine($"States have been dumped into file {path}");
-        }
-
-        private Blockchain GetBlockchain(string hashString)
-        {
-            if (TryParseChainHash(hashString, out UInt160 chainHash))
-            {
-                Blockchain blockchain = AppChainManager.Singleton.GetBlockchain(chainHash);
-                return blockchain;
-            }
-            else
-            {
-                return Blockchain.Root;
-            }
-        }
-
-        private bool TryParseChainHash(string hashString, out UInt160 chainHash)
-        {
-            if (hashString.Length == 40 || (hashString.StartsWith("0x") && hashString.Length == 42))
-            {
-                chainHash = UInt160.Parse(hashString);
-                return true;
-            }
-            chainHash = null;
-            return false;
+            Console.WriteLine($"States ({array.Count}) have been dumped into file {path}");
         }
     }
 }

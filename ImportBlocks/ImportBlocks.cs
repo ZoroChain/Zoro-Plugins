@@ -3,6 +3,7 @@ using Zoro.IO;
 using Zoro.Ledger;
 using Zoro.Network.P2P.Payloads;
 using Zoro.Persistence;
+using Zoro.AppChain;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -98,10 +99,14 @@ namespace Zoro.Plugins
         public override bool OnMessage(object message)
         {
             if (!(message is string[] args)) return false;
-            if (args.Length < 2) return false;
+            if (args.Length < 3) return false;
             if (args[0] != "export") return false;
             if (args[1] != "block" && args[1] != "blocks") return false;
-            if (args.Length >= 3 && uint.TryParse(args[2], out uint start))
+
+            // 用输入的第三个参数，获取Blockchain对象
+            Blockchain blockchain = AppChainManager.Singleton.GetBlockchain(args[2]);
+
+            if (args.Length >= 4 && uint.TryParse(args[3], out uint start))
             {
                 if (start > blockchain.Height)
                     return true;
