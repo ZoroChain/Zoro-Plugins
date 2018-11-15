@@ -54,7 +54,8 @@ namespace Zoro.Plugins
             if (!loggers.ContainsKey(chainHash))
             {
                 // 根据链的Hash，获取对应的ZoroSystem对象
-                if (AppChainManager.Singleton.GetAppChainSystem(chainHash, out ZoroSystem system))
+                ZoroSystem system = AppChainManager.Singleton.GetZoroSystem(chainHash);
+                if (system != null)
                 {
                     // 用MagicNumber加上ChainHash作为ApplicationLog数据库的文件名
                     string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), chainHash.ToArray().Reverse().ToHexString());
@@ -84,18 +85,14 @@ namespace Zoro.Plugins
         // 根据ChainHash，获取对应的Db对象
         private bool TryGetDB(JObject param, out DB db)
         {
-            UInt160 chainHash;
             string hashString = param.AsString();
-            if (hashString.Length == 40 || (hashString.StartsWith("0x") && hashString.Length == 42))
-            {
-                chainHash = UInt160.Parse(param.AsString());
-            }
-            else
-            {
-                chainHash = UInt160.Zero;
-            }
 
-            return dbs.TryGetValue(chainHash, out db);
+            if (AppChainManager.Singleton.TryParseChainHash(hashString, out UInt160 chainHash))
+            {
+                return dbs.TryGetValue(chainHash, out db);
+            }
+            db = null;
+            return false;
         }
         
         // 第一个参数是ChainHash，第二个参数是交易Id
