@@ -55,7 +55,7 @@ namespace Zoro.Plugins
             }
             else
             {
-                Log(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
+                Log(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session.LocalEndPoint));
             }
         }
 
