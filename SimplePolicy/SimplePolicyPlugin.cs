@@ -100,6 +100,8 @@ namespace Zoro.Plugins
                     return OnEnableLogCommand(args);
                 case "disable":
                     return OnDisableLogCommand(args);
+                case "level":
+                    return OnLogLevelCommand(args);
                 default:
                     return false;
             }
@@ -135,6 +137,19 @@ namespace Zoro.Plugins
         private bool OnDisableLogCommand(string[] args)
         {
             PluginManager.DisableLogSource(args[2]);
+            return true;
+        }
+
+        private bool OnLogLevelCommand(string[] args)
+        {
+            if (int.TryParse(args[2], out int level))
+            {
+                if (level >= 0 && level <= 4)
+                {
+                    PluginManager.SetLogLevel((LogLevel)level);
+                }
+            }
+
             return true;
         }
     }
