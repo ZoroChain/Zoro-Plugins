@@ -24,7 +24,7 @@ namespace Zoro.Plugins
         protected override void PostStop()
         {
             // 关闭对应的ApplicationLog数据库
-            db.Dispose();
+            db.Dispose();            
         }
 
         protected override void OnReceive(object message)

@@ -4,6 +4,7 @@ using Zoro.IO.Json;
 using Zoro.AppChain;
 using Zoro.Network.RPC;
 using Zoro.Network.P2P;
+using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Concurrent;
@@ -27,7 +28,7 @@ namespace Zoro.Plugins
         {
             foreach (var logger in loggers.Values)
             {
-                PluginMgr.System.ActorSystem.Stop(logger);
+                ZoroActorSystem.Root.ActorSystem.Stop(logger);
             }
         }
 
@@ -65,7 +66,7 @@ namespace Zoro.Plugins
                     DB db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
                     // 创建Actor对象来处理Blockchain发来的消息通知
-                    IActorRef logger = PluginMgr.System.ActorSystem.ActorOf(Logger.Props(system.Blockchain, db), "ApplicationLogs_" + chainHash.ToString());
+                    IActorRef logger = system.ActorOf(Logger.Props(system.Blockchain, db), "ApplicationLogs_" + chainHash.ToString());
 
                     // 记录创建的Actor和Db对象
                     loggers.TryAdd(chainHash, logger);
@@ -78,8 +79,15 @@ namespace Zoro.Plugins
         {
             if (loggers.TryRemove(chainHash, out IActorRef logger))
             {
+                ZoroSystem system = AppChainManager.Singleton.GetZoroSystem(chainHash);
+
+                if(system == null)
+                {
+                    throw new InvalidOperationException();
+                }
+
                 // 停止Actor对象
-                PluginMgr.System.ActorSystem.Stop(logger);
+                system.Stop(logger);
             }
 
             dbs.TryRemove(chainHash, out DB db);
