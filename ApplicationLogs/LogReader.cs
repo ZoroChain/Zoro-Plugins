@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Zoro.IO.Data.LevelDB;
 using Zoro.IO.Json;
-using Zoro.AppChain;
 using Zoro.Network.RPC;
 using Zoro.Network.P2P;
 using System;
