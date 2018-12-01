@@ -67,7 +67,7 @@ namespace Zoro.Plugins
                 return false;
 
             // 用输入的第三个参数，获取Blockchain对象
-            Blockchain blockchain = AppChainManager.Singleton.GetBlockchain(args[2]);
+            Blockchain blockchain = ZoroChainSystem.Singleton.GetBlockchain(args[2]);
             if (blockchain == null)
                 return false;
 
@@ -186,7 +186,7 @@ namespace Zoro.Plugins
                 }).OrderBy(p => p.Start);
                 foreach (var path in paths)
                 {
-                    Blockchain blockchain = AppChainManager.Singleton.GetBlockchain(GetChainHash(path.FileName));
+                    Blockchain blockchain = ZoroChainSystem.Singleton.GetBlockchain(GetChainHash(path.FileName));
                     if (blockchain == null)
                         continue;
 
@@ -197,7 +197,7 @@ namespace Zoro.Plugins
                         using (ZipArchive zip = new ZipArchive(fs, ZipArchiveMode.Read))
                         using (Stream zs = zip.GetEntry(Path.GetFileNameWithoutExtension(path.FileName)).Open())
                         {
-                            ZoroSystem system = AppChainManager.Singleton.GetZoroSystem(GetChainHash(path.FileName));
+                            ZoroSystem system = ZoroChainSystem.Singleton.GetZoroSystem(GetChainHash(path.FileName));
                             if (system != null)
                             {
                                 system.Blockchain.Ask<Blockchain.ImportCompleted>(new Blockchain.Import
@@ -212,7 +212,7 @@ namespace Zoro.Plugins
                     {
                         using (FileStream fs = new FileStream(path.FileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
-                            ZoroSystem system = AppChainManager.Singleton.GetZoroSystem(GetChainHash(path.FileName));
+                            ZoroSystem system = ZoroChainSystem.Singleton.GetZoroSystem(GetChainHash(path.FileName));
                             if (system != null)
                             {
                                 system.Blockchain.Ask<Blockchain.ImportCompleted>(new Blockchain.Import

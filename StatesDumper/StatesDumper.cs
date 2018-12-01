@@ -62,7 +62,7 @@ namespace Zoro.Plugins
         private void DumpStorage(string[] args)
         {
             // 用输入的第三个参数，获取Blockchain对象
-            Blockchain blockchain = AppChainManager.Singleton.GetBlockchain(args[2]);
+            Blockchain blockchain = ZoroChainSystem.Singleton.GetBlockchain(args[2]);
             Dump(args.Length >= 4 ? blockchain.Store.GetStorages().Find(UInt160.Parse(args[3]).ToArray()) : blockchain.Store.GetStorages().Find());
         }
 
