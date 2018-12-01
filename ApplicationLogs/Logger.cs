@@ -12,11 +12,15 @@ namespace Zoro.Plugins
     internal class Logger : UntypedActor
     {
         private readonly DB db;
+        private readonly LogReader reader;
+        private readonly UInt160 chainHash;
 
-        public Logger(IActorRef blockchain, DB db)
+        public Logger(LogReader reader, IActorRef blockchain, DB db, UInt160 chainHash)
         {
             this.db = db;
-            
+            this.reader = reader;
+            this.chainHash = chainHash;
+
             // 注册Blockchain的分发事件
             blockchain.Tell(new Blockchain.Register());
         }
@@ -24,7 +28,9 @@ namespace Zoro.Plugins
         protected override void PostStop()
         {
             // 关闭对应的ApplicationLog数据库
-            db.Dispose();            
+            db.Dispose();
+
+            reader.RemoveLogger(chainHash);
         }
 
         protected override void OnReceive(object message)
@@ -69,9 +75,9 @@ namespace Zoro.Plugins
             }
         }
 
-        public static Props Props(IActorRef blockchain, DB db)
+        public static Props Props(LogReader reader, IActorRef blockchain, DB db, UInt160 chainHash)
         {
-            return Akka.Actor.Props.Create(() => new Logger(blockchain, db));
+            return Akka.Actor.Props.Create(() => new Logger(reader, blockchain, db, chainHash));
         }
     }
 }

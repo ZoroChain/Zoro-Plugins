@@ -24,14 +24,6 @@ namespace Zoro.Plugins
         {
         }
 
-        public override void Dispose()
-        {
-            foreach (var logger in loggers.Values)
-            {
-                ZoroActorSystem.Root.ActorSystem.Stop(logger);
-            }
-        }
-
         // 处理ZoroSystem发来的消息通知
         public override bool OnMessage(object message)
         {
@@ -39,13 +31,6 @@ namespace Zoro.Plugins
             {
                 // 每次有一条链启动时，打开对应的ApplicationLog数据库文件
                 CreateLogger(started.ChainHash);
-                return true;
-            }
-            else if (message is ZoroSystem.ChainStopped stopped)
-            {
-                // 每次有一条链关闭时，结束对应的Actor对象，并关闭对应的ApplicationLog数据库
-                StopLogger(stopped.ChainHash);
-                return true;
             }
             return false;
         }
@@ -55,7 +40,7 @@ namespace Zoro.Plugins
             if (!loggers.ContainsKey(chainHash))
             {
                 // 根据链的Hash，获取对应的ZoroSystem对象
-                ZoroSystem system = AppChainManager.Singleton.GetZoroSystem(chainHash);
+                ZoroSystem system = ZoroChainSystem.Singleton.GetZoroSystem(chainHash);
                 if (system != null)
                 {
                     // 用MagicNumber加上ChainHash作为ApplicationLog数据库的文件名
@@ -66,7 +51,7 @@ namespace Zoro.Plugins
                     DB db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
                     // 创建Actor对象来处理Blockchain发来的消息通知
-                    IActorRef logger = system.ActorOf(Logger.Props(system.Blockchain, db), "ApplicationLogs_" + chainHash.ToString());
+                    IActorRef logger = system.ActorOf(Logger.Props(this, system.Blockchain, db, chainHash), "ApplicationLogs");
 
                     // 记录创建的Actor和Db对象
                     loggers.TryAdd(chainHash, logger);
@@ -75,22 +60,10 @@ namespace Zoro.Plugins
             }
         }
 
-        private void StopLogger(UInt160 chainHash)
+        public void RemoveLogger(UInt160 chainHash)
         {
-            if (loggers.TryRemove(chainHash, out IActorRef logger))
-            {
-                ZoroSystem system = AppChainManager.Singleton.GetZoroSystem(chainHash);
-
-                if(system == null)
-                {
-                    throw new InvalidOperationException();
-                }
-
-                // 停止Actor对象
-                system.Stop(logger);
-            }
-
-            dbs.TryRemove(chainHash, out DB db);
+            loggers.TryRemove(chainHash, out IActorRef _);
+            dbs.TryRemove(chainHash, out DB _);
         }
 
         // 根据ChainHash，获取对应的Db对象
@@ -98,7 +71,7 @@ namespace Zoro.Plugins
         {
             string hashString = param.AsString();
 
-            if (AppChainManager.Singleton.TryParseChainHash(hashString, out UInt160 chainHash))
+            if (ZoroChainSystem.Singleton.TryParseChainHash(hashString, out UInt160 chainHash))
             {
                 return dbs.TryGetValue(chainHash, out db);
             }
