@@ -25,9 +25,9 @@ namespace Zoro.Plugins
                 case PolicyType.AllowAll:
                     return true;
                 case PolicyType.AllowList:
-                    return tx.Witnesses.All(p => Settings.Default.BlockedAccounts.List.Contains(p.VerificationScript.ToScriptHash())) || tx.Outputs.All(p => Settings.Default.BlockedAccounts.List.Contains(p.ScriptHash));
+                    return tx.Witnesses.All(p => Settings.Default.BlockedAccounts.List.Contains(p.VerificationScript.ToScriptHash()));
                 case PolicyType.DenyList:
-                    return tx.Witnesses.All(p => !Settings.Default.BlockedAccounts.List.Contains(p.VerificationScript.ToScriptHash())) && tx.Outputs.All(p => !Settings.Default.BlockedAccounts.List.Contains(p.ScriptHash));
+                    return tx.Witnesses.All(p => !Settings.Default.BlockedAccounts.List.Contains(p.VerificationScript.ToScriptHash()));
                 default:
                     return false;
             }
