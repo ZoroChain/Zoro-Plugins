@@ -30,6 +30,10 @@ namespace Zoro.Plugins
 
             Console.WriteLine(string.Format("Rpc agent is running on port {0}.", Settings.Default.Port));
         }
+        public override void Configure()
+        {
+            Settings.Load(GetConfiguration());
+        }
 
         public override void Dispose()
         {

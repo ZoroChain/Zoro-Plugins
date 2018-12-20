@@ -23,6 +23,11 @@ namespace Zoro.Plugins
         {
         }
 
+        public override void Configure()
+        {
+            Settings.Load(GetConfiguration());
+        }
+
         // 处理ZoroSystem发来的消息通知
         public override bool OnMessage(object message)
         {

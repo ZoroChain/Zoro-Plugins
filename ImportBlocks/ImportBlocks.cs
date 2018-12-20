@@ -3,7 +3,6 @@ using Zoro.IO;
 using Zoro.Ledger;
 using Zoro.Network.P2P.Payloads;
 using Zoro.Persistence;
-using Zoro.AppChain;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +25,10 @@ namespace Zoro.Plugins
             if (Settings.Default.MaxOnImportHeight == 0 || Settings.Default.MaxOnImportHeight >= currentImportBlockHeight)
                 return true;
             return false;
+        }
+        public override void Configure()
+        {
+            Settings.Load(GetConfiguration());
         }
 
         private string GetChainHash(string filename)

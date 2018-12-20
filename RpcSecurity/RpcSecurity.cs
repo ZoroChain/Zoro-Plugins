@@ -13,6 +13,10 @@ namespace Zoro.Plugins
             : base(pluginMgr)
         {
         }
+        public override void Configure()
+        {
+            Settings.Load(GetConfiguration());
+        }
 
         public JObject OnProcess(HttpContext context, string method, JArray _params)
         {

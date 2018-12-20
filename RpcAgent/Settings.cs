@@ -8,17 +8,17 @@ namespace Zoro.Plugins
         public ushort Port { get; }
         public ushort MaxConnections { get; }
 
-        public static Settings Default { get; }
+        public static Settings Default { get; private set; }
 
-        static Settings()
-        {
-            Default = new Settings(Assembly.GetExecutingAssembly().GetConfiguration());
-        }
-
-        public Settings(IConfigurationSection section)
+        private Settings(IConfigurationSection section)
         {
             this.Port = ushort.Parse(section.GetSection("Port").Value);
             this.MaxConnections = ushort.Parse(section.GetSection("MaxConnections").Value);
+        }
+
+        public static void Load(IConfigurationSection section)
+        {
+            Default = new Settings(section);
         }
     }
 }
