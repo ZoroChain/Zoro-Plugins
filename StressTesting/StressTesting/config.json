@@ -1,6 +1,6 @@
 ﻿{
   "PluginConfiguration": {
-    "TargetChainHash": "0x198530579a90adfd6a7286f3c1f656d17cd3332b",
+    "TargetChainHash": "",
     "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
     "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
     "NEP5Hash": "c4108917282bff79b156d4d01315df811790c0e8",
