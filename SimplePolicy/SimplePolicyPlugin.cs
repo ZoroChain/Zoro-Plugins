@@ -24,8 +24,6 @@ namespace Zoro.Plugins
 
         public bool FilterForMemoryPool(Transaction tx)
         {
-            if (!VerifySizeLimits(tx)) return false;
-
             switch (Settings.Default.BlockedAccounts.Type)
             {
                 case PolicyType.AllowAll:
@@ -41,53 +39,15 @@ namespace Zoro.Plugins
 
         public IEnumerable<Transaction> FilterForBlock(IEnumerable<Transaction> transactions)
         {
-            return FilterForBlock_Policy2(transactions);
-        }
-
-        private static IEnumerable<Transaction> FilterForBlock_Policy1(IEnumerable<Transaction> transactions)
-        {
-            int count = 0, count_free = 0;
-            foreach (Transaction tx in transactions.OrderByDescending(p => p.NetworkFee / p.Size).ThenByDescending(p => p.NetworkFee))
-            {
-                if (count++ >= Settings.Default.MaxTransactionsPerBlock - 1) break;
-                if (!tx.IsLowPriority || count_free++ < Settings.Default.MaxFreeTransactionsPerBlock)
-                    yield return tx;
-            }
-        }
-
-        private static IEnumerable<Transaction> FilterForBlock_Policy2(IEnumerable<Transaction> transactions)
-        {
             if (!(transactions is IReadOnlyList<Transaction> tx_list))
                 tx_list = transactions.ToArray();
 
-            Transaction[] free = tx_list.Where(p => p.IsLowPriority)
-                .OrderByDescending(p => p.NetworkFee / p.Size)
-                .ThenByDescending(p => p.NetworkFee)
-                .Take(Settings.Default.MaxFreeTransactionsPerBlock)
+            Transaction[] txs = tx_list.OrderByDescending(p => p.SystemFee / p.Size)
+                .ThenByDescending(p => p.SystemFee)
+                .Take(Settings.Default.MaxTransactionsPerBlock - 1)
                 .ToArray();
 
-            Transaction[] non_free = tx_list.Where(p => !p.IsLowPriority)
-                .OrderByDescending(p => p.NetworkFee / p.Size)
-                .ThenByDescending(p => p.NetworkFee)
-                .Take(Settings.Default.MaxTransactionsPerBlock - free.Length - 1)
-                .ToArray();
-
-            return non_free.Concat(free);
-        }
-
-        private bool VerifySizeLimits(Transaction tx)
-        {
-            // Not Allow free TX bigger than MaxFreeTransactionSize
-            if (tx.IsLowPriority && tx.Size > Settings.Default.MaxFreeTransactionSize) return false;
-
-            // Require proportional fee for TX bigger than MaxFreeTransactionSize
-            if (tx.Size > Settings.Default.MaxFreeTransactionSize)
-            {
-                Fixed8 fee = Settings.Default.FeePerExtraByte * (tx.Size - Settings.Default.MaxFreeTransactionSize);
-
-                if (tx.NetworkFee < fee) return false;
-            }
-            return true;
+            return txs;
         }
 
         void ILogPlugin.Log(string source, LogLevel level, string message, UInt160 chainHash)
