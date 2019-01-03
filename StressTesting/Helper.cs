@@ -154,7 +154,7 @@ namespace Zoro.Plugins
             tx.Witnesses = wit.ToArray();
         }
 
-        public static void PushRandomBytes(ScriptBuilder sb, int count = 32)
+        public static void PushRandomBytes(ScriptBuilder sb, int count = 8)
         {
             MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
             byte[] randomBytes = new byte[count];
