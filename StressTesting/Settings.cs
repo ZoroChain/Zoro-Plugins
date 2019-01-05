@@ -7,9 +7,8 @@ namespace Zoro.Plugins
         public string WIF { get; }
         public string TargetWIF { get; }
         public string TargetChainHash { get; }
-        public string BCPHash { get; }
         public string NEP5Hash { get; }
-        public string NativeNEP5Hash { get; }        
+        public string NativeNEP5Hash { get; }
 
         public static Settings Default { get; private set; }
 
@@ -18,7 +17,6 @@ namespace Zoro.Plugins
             this.WIF = section.GetSection("WIF").Value;
             this.TargetWIF = section.GetSection("TargetWIF").Value;
             this.TargetChainHash = section.GetSection("TargetChainHash").Value;
-            this.BCPHash = section.GetSection("BCPHash").Value;
             this.NEP5Hash = section.GetSection("NEP5Hash").Value;
             this.NativeNEP5Hash = section.GetSection("NativeNEP5").Value;
         }

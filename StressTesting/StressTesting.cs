@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Generic;
 using Zoro.Wallets;
+using Zoro.Ledger;
 using Neo.VM;
 
 namespace Zoro.Plugins
@@ -15,7 +16,6 @@ namespace Zoro.Plugins
         private UInt160 targetAddress;
         private UInt160 nep5ContractHash;
         private UInt160 nativeNEP5AssetId;
-        private UInt160 BCPAssetId;
         private string transferValue;
         private int transType = 0;
         private int cocurrentNum = 0;
@@ -81,9 +81,6 @@ namespace Zoro.Plugins
 
             string nativeNEP5Hash = Settings.Default.NativeNEP5Hash;
             nativeNEP5AssetId = UInt160.Parse(nativeNEP5Hash);
-
-            string BCPHash = Settings.Default.BCPHash;
-            BCPAssetId = UInt160.Parse(BCPHash);
 
             if (transType == 0 || transType == 1 || transType == 2)
             {
@@ -222,7 +219,7 @@ namespace Zoro.Plugins
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", BCPAssetId, scriptHash, targetAddress, BigInteger.Parse(transferValue));
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", Genesis.BcpContractAddress, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
                 await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["BCPTransfer"], GasPrice);
             }
