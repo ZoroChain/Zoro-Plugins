@@ -154,27 +154,15 @@ namespace Zoro.Plugins
             tx.Witnesses = wit.ToArray();
         }
 
-        public static void PushRandomBytes(ScriptBuilder sb, int count = 8)
-        {
-            MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
-            byte[] randomBytes = new byte[count];
-            using (System.Security.Cryptography.RandomNumberGenerator rng = System.Security.Cryptography.RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(randomBytes);
-            }
-            BigInteger randomNum = new BigInteger(randomBytes);
-            sb.EmitPush(randomNum);
-            sb.EmitPush(OpCode.DROP);
-        }
-
         public static InvocationTransaction MakeTransaction(byte[] script, KeyPair keypair, Fixed8 gasLimit, Fixed8 gasPrice)
         {
             InvocationTransaction tx = new InvocationTransaction
             {
+                Nonce = Transaction.GetNonce(),
                 Script = script,
                 GasPrice = gasPrice,
                 GasLimit = gasLimit.Ceiling(),
-                ScriptHash = GetPublicKeyHash(keypair.PublicKey)
+                Account = GetPublicKeyHash(keypair.PublicKey)
             };
 
             tx.Attributes = new TransactionAttribute[0];
@@ -190,10 +178,11 @@ namespace Zoro.Plugins
         {
             InvocationTransaction tx = new InvocationTransaction
             {
+                Nonce = Transaction.GetNonce(),
                 Script = script,
                 GasPrice = gasPrice,
                 GasLimit = gasLimit.Ceiling(),
-                ScriptHash = GetMultiSigRedeemScriptHash(m, keypairs)
+                Account = GetMultiSigRedeemScriptHash(m, keypairs)
             };
 
             int count = keypairs.Length;
