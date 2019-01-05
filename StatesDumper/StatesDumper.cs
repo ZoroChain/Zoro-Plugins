@@ -82,7 +82,7 @@ namespace Zoro.Plugins
             return true;
         }
 
-        public void OnPersist(Snapshot snapshot)
+        public void OnPersist(Snapshot snapshot, IReadOnlyList<Blockchain.ApplicationExecuted> applicationExecutedList)
         {
             if (Settings.Default.PersistAction.HasFlag(PersistActions.StorageChanges))
                 OnPersistStorage(snapshot);
