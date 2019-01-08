@@ -22,6 +22,7 @@ namespace Zoro.Plugins
         private int transNum = 0;
         private int waitingNum = 0;
         private int step = 0;
+        private int error = 0;
 
         private Fixed8 GasPrice = Fixed8.One;
         private Dictionary<string, Fixed8> GasLimit = new Dictionary<string, Fixed8>();
@@ -134,6 +135,7 @@ namespace Zoro.Plugins
             int pendingNum = 0;
 
             waitingNum = 0;
+            error = 0;
 
             while (true)
             {
@@ -151,7 +153,7 @@ namespace Zoro.Plugins
                     cc = Math.Min(transNum - total, cc);
                 }
 
-                Console.WriteLine($"round:{++idx}, total:{total}, tx:{cc}, pending:{pendingNum}, waiting:{waitingNum}");
+                Console.WriteLine($"round:{++idx}, total:{total}, tx:{cc}, pending:{pendingNum}, waiting:{waitingNum}, error:{error}");
 
                 lastWaiting = waitingNum;
 
@@ -201,7 +203,9 @@ namespace Zoro.Plugins
             {
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", nativeNEP5AssetId, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NativeNEP5Transfer"], GasPrice);
+                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NativeNEP5Transfer"], GasPrice);
+
+                OnRelayResult(result);
             }
         }
 
@@ -211,7 +215,9 @@ namespace Zoro.Plugins
             {
                 sb.EmitAppCall(nep5ContractHash, "transfer", scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NEP5Transfer"], GasPrice);
+                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NEP5Transfer"], GasPrice);
+
+                OnRelayResult(result);
             }
         }
 
@@ -221,7 +227,36 @@ namespace Zoro.Plugins
             {
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", Genesis.BcpContractAddress, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["BCPTransfer"], GasPrice);
+                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["BCPTransfer"], GasPrice);
+
+                OnRelayResult(result);
+            }
+        }
+
+        private void OnRelayResult(RelayResultReason reason)
+        {
+            if (reason != RelayResultReason.Succeed)
+            {
+                Interlocked.Increment(ref error);
+
+                switch (reason)
+                {
+                    case RelayResultReason.AlreadyExists:
+                        Console.Write("Block or transaction already exists and cannot be sent repeatedly.");
+                        break;
+                    case RelayResultReason.OutOfMemory:
+                        Console.Write("The memory pool is full and no more transactions can be sent.");
+                        break;
+                    case RelayResultReason.UnableToVerify:
+                        Console.Write("The block cannot be validated.");
+                        break;
+                    case RelayResultReason.Invalid:
+                        Console.Write("Block or transaction validation failed.");
+                        break;
+                    default:
+                        Console.Write("Unknown error.");
+                        break;
+                }
             }
         }
     }
