@@ -52,15 +52,15 @@ namespace Zoro.Plugins
 
         private bool OnStressTestingCommand(string[] args)
         {
-            Console.Write("Transaction Type，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP：");
+            Console.Write("Transaction Type, 0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP:");
             var param1 = Console.ReadLine();
-            Console.Write("Concurrency number：");
+            Console.Write("Concurrency number:");
             var param2 = Console.ReadLine();
-            Console.Write("Totoal transaction count：");
+            Console.Write("Totoal transaction count:");
             var param3 = Console.ReadLine();
-            Console.Write("Transfer value：");
+            Console.Write("Transfer value:");
             var param4 = Console.ReadLine();
-            Console.Write("Automatic concurrency adjustment, 0 - no, 1 - yes：");
+            Console.Write("Automatic concurrency adjustment, 0 - no, 1 - yes:");
             var param5 = Console.ReadLine();
 
             transType = int.Parse(param1);
