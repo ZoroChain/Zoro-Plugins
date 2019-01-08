@@ -52,15 +52,15 @@ namespace Zoro.Plugins
 
         private bool OnStressTestingCommand(string[] args)
         {
-            Console.Write("选择交易类型，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP：");
+            Console.Write("Transaction Type，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP：");
             var param1 = Console.ReadLine();
-            Console.Write("输入并发的数量：");
+            Console.Write("Concurrency number：");
             var param2 = Console.ReadLine();
-            Console.Write("发送几次交易：");
+            Console.Write("Totoal transaction count：");
             var param3 = Console.ReadLine();
-            Console.Write("转账金额：");
+            Console.Write("Transfer value：");
             var param4 = Console.ReadLine();
-            Console.Write("是否自动调整并发数量：");
+            Console.Write("Automatic concurrency adjustment, 0 - no, 1 - yes：");
             var param5 = Console.ReadLine();
 
             transType = int.Parse(param1);
@@ -95,7 +95,7 @@ namespace Zoro.Plugins
 
             Task.Run(() => RunTask(chainHash));
 
-            Console.WriteLine("输入回车键停止:");
+            Console.WriteLine("Input [enter] to stop:");
             var input = Console.ReadLine();
             cancelTokenSource.Cancel();
 
@@ -141,14 +141,17 @@ namespace Zoro.Plugins
             {
                 if (cancelTokenSource.IsCancellationRequested)
                 {
-                    Console.WriteLine("停止发送交易.");
+                    Console.WriteLine("Stress testing stopped.");
                     break;
                 }
 
                 if (transNum > 0)
                 {
                     if (total >= transNum && pendingNum == 0 && waitingNum == 0)
+                    {
+                        Console.WriteLine($"round:{++idx}, total:{total}, tx:0, pending:{pendingNum}, waiting:{waitingNum}, error:{error}");
                         break;
+                    }
 
                     cc = Math.Min(transNum - total, cc);
                 }
@@ -242,19 +245,19 @@ namespace Zoro.Plugins
                 switch (reason)
                 {
                     case RelayResultReason.AlreadyExists:
-                        Console.Write("Block or transaction already exists and cannot be sent repeatedly.");
+                        Console.WriteLine("Block or transaction already exists and cannot be sent repeatedly.");
                         break;
                     case RelayResultReason.OutOfMemory:
-                        Console.Write("The memory pool is full and no more transactions can be sent.");
+                        Console.WriteLine("The memory pool is full and no more transactions can be sent.");
                         break;
                     case RelayResultReason.UnableToVerify:
-                        Console.Write("The block cannot be validated.");
+                        Console.WriteLine("The block cannot be validated.");
                         break;
                     case RelayResultReason.Invalid:
-                        Console.Write("Block or transaction validation failed.");
+                        Console.WriteLine("Block or transaction validation failed.");
                         break;
                     default:
-                        Console.Write("Unknown error.");
+                        Console.WriteLine("Unknown error.");
                         break;
                 }
             }
