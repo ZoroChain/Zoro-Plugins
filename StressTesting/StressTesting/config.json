@@ -4,6 +4,13 @@
     "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
     "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
     "NEP5Hash": "c4108917282bff79b156d4d01315df811790c0e8",
-    "NativeNEP5": "0x69f5041dc8a0b30c606122e5accf14f5f85ade96"
+    "NativeNEP5": "0x69f5041dc8a0b30c606122e5accf14f5f85ade96",
+    "EnableManualParam": 0,
+    "TransactionType": 1,
+    "ConcurrencyCount": 500,
+    "TransferCount": 50000,
+    "TransferValue": 1,
+    "RandomTargetAddress": 1,
+    "AutoConcurrencyAdjustment": 0
   }
 }

@@ -1,10 +1,14 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using Zoro.Wallets;
 using Zoro.Ledger;
+using Zoro.IO;
 using Neo.VM;
 
 namespace Zoro.Plugins
@@ -17,12 +21,14 @@ namespace Zoro.Plugins
         private UInt160 nep5ContractHash;
         private UInt160 nativeNEP5AssetId;
         private string transferValue;
-        private int transType = 0;
+        private int transactionType = 0;
         private int cocurrentNum = 0;
-        private int transNum = 0;
+        private int transferCount = 0;
         private int waitingNum = 0;
         private int step = 0;
         private int error = 0;
+        private bool randomTargetAddress = false;
+        private UInt160[] targetAddressList;
 
         private Fixed8 GasPrice = Fixed8.One;
         private Dictionary<string, Fixed8> GasLimit = new Dictionary<string, Fixed8>();
@@ -52,22 +58,37 @@ namespace Zoro.Plugins
 
         private bool OnStressTestingCommand(string[] args)
         {
-            Console.Write("Transaction Type, 0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP:");
-            var param1 = Console.ReadLine();
-            Console.Write("Concurrency number:");
-            var param2 = Console.ReadLine();
-            Console.Write("Totoal transaction count:");
-            var param3 = Console.ReadLine();
-            Console.Write("Transfer value:");
-            var param4 = Console.ReadLine();
-            Console.Write("Automatic concurrency adjustment, 0 - no, 1 - yes:");
-            var param5 = Console.ReadLine();
+            if (Settings.Default.EnableManualParam == 1)
+            {
+                Console.Write("Transaction Type, 0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP:");
+                var param1 = Console.ReadLine();
+                Console.Write("Concurrency number:");
+                var param2 = Console.ReadLine();
+                Console.Write("Totoal transaction count:");
+                var param3 = Console.ReadLine();
+                Console.Write("Transfer value:");
+                var param4 = Console.ReadLine();
+                Console.Write("Random target address, 0 - no, 1 - yes:");
+                var param5 = Console.ReadLine();
+                Console.Write("Automatic concurrency adjustment, 0 - no, 1 - yes:");
+                var param6 = Console.ReadLine();
 
-            transType = int.Parse(param1);
-            transNum = int.Parse(param3);
-            cocurrentNum = int.Parse(param2);
-            transferValue = param4;
-            step = int.Parse(param5) == 1 ? Math.Max(cocurrentNum / 5, 10) : 0;
+                transactionType = int.Parse(param1);
+                transferCount = int.Parse(param3);
+                cocurrentNum = int.Parse(param2);
+                transferValue = param4;
+                randomTargetAddress = int.Parse(param5) == 1;
+                step = int.Parse(param6) == 1 ? Math.Max(cocurrentNum / 5, 10) : 0;
+            }
+            else
+            {
+                transactionType = Settings.Default.TransactionType;
+                transferCount = Settings.Default.TransferCount;
+                cocurrentNum = Settings.Default.ConcurrencyCount;
+                transferValue = Settings.Default.TransferValue.ToString();
+                randomTargetAddress = Settings.Default.RandomTargetAddress == 1;
+                step = Settings.Default.AutoConcurrencyAdjustment == 1 ? Math.Max(cocurrentNum / 5, 10) : 0;
+            }
         
             string chainHash = Settings.Default.TargetChainHash;
             string WIF = Settings.Default.WIF;
@@ -77,17 +98,23 @@ namespace Zoro.Plugins
             scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
             targetAddress = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
 
-            string contractHash = Settings.Default.NEP5Hash;
-            nep5ContractHash = UInt160.Parse(contractHash);
+            nep5ContractHash = UInt160.Parse(Settings.Default.NEP5Hash);
+            nativeNEP5AssetId = UInt160.Parse(Settings.Default.NativeNEP5Hash);
 
-            string nativeNEP5Hash = Settings.Default.NativeNEP5Hash;
-            nativeNEP5AssetId = UInt160.Parse(nativeNEP5Hash);
+            if (randomTargetAddress)
+            {
+                PluginManager.EnableLog(false);
 
-            if (transType == 0 || transType == 1 || transType == 2)
+                InitializeRandomTargetAddressList(transferCount);
+
+                PluginManager.EnableLog(true);
+            }
+
+            if (transactionType == 0 || transactionType == 1 || transactionType == 2)
             {
                 Console.WriteLine($"From:{WIF}");
                 Console.WriteLine($"To:{targetWIF}");
-                Console.WriteLine($"Count:{transNum}");
+                Console.WriteLine($"Count:{transferCount}");
                 Console.WriteLine($"Value:{transferValue}");
             }
 
@@ -102,21 +129,105 @@ namespace Zoro.Plugins
             return true;
         }
 
-        protected async void CallTransfer(string chainHash)
+        protected void InitializeRandomTargetAddressList(int count)
+        {
+            string filename = "targetaddress.dat";
+            if (!LoadTargetAddress(filename, count))
+            {
+                GenerateRandomTargetAddressList(filename, count);
+            }
+        }
+
+        protected bool LoadTargetAddress(string filename, int count)
+        {
+            if (!File.Exists(filename))
+                return false;
+
+            using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                using (BinaryReader reader = new BinaryReader(fs, Encoding.ASCII, true))
+                {
+                    int num = reader.ReadInt32();
+                    if (num < count)
+                        return false;
+
+                    targetAddressList = new UInt160[num];
+                    for (int i = 0; i < num; i++)
+                    {
+                        targetAddressList[i] = reader.ReadSerializable<UInt160>();
+                    }
+
+                    return true;
+                }
+            }
+        }
+
+        protected void GenerateRandomTargetAddressList(string filename, int count)
+        {
+            Console.WriteLine($"Generating random target address list:{count}");
+
+            DateTime time = DateTime.UtcNow;
+
+            targetAddressList = new UInt160[count];
+            for (int i = 0; i < count; i++)
+            {
+                targetAddressList[i] = GenerateRandomTargetAddress();
+                if (i % 100 == 0)
+                {
+                    Console.Write(".");
+                }
+            }
+
+            TimeSpan interval = DateTime.UtcNow - time;
+
+            Console.WriteLine($"Target address list completed, time:{interval:hh\\:mm\\:ss\\.ff}");
+
+            using (FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                using (BinaryWriter writer = new BinaryWriter(fs, Encoding.ASCII, true))
+                {
+                    writer.Write(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        writer.Write(targetAddressList[i]);
+                    }
+                }
+            }            
+        }
+
+        protected UInt160 GenerateRandomTargetAddress()
+        {
+            byte[] privateKey = new byte[32];
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(privateKey);
+            }
+
+            KeyPair key = new KeyPair(privateKey);
+            return key.PublicKeyHash;
+        }
+
+        protected UInt160 GetRandomTargetAddress(Random rnd)
+        {
+            int index = rnd.Next(0, targetAddressList.Length);
+            return targetAddressList[index];
+        }
+
+        protected async void CallTransfer(string chainHash, UInt160 targetAddress)
         {
             Interlocked.Increment(ref waitingNum);
 
-            if (transType == 0)
+            if (transactionType == 0)
             {
-                await NEP5Transfer(chainHash);
+                await NEP5Transfer(chainHash, targetAddress);
             }
-            else if (transType == 1)
+            else if (transactionType == 1)
             {
-                await NativeNEP5Transfer(chainHash);
+                await NativeNEP5Transfer(chainHash, targetAddress);
             }
-            else if (transType == 2)
+            else if (transactionType == 2)
             {
-                await BCPTransfer(chainHash);
+                await BCPTransfer(chainHash, targetAddress);
             }
 
             Interlocked.Decrement(ref waitingNum);
@@ -124,6 +235,7 @@ namespace Zoro.Plugins
 
         public void RunTask(string chainHash)
         {
+            Random rnd = new Random();
             TimeSpan oneSecond = TimeSpan.FromSeconds(1);
 
             int idx = 0;
@@ -145,15 +257,15 @@ namespace Zoro.Plugins
                     break;
                 }
 
-                if (transNum > 0)
+                if (transferCount > 0)
                 {
-                    if (total >= transNum && pendingNum == 0 && waitingNum == 0)
+                    if (total >= transferCount && pendingNum == 0 && waitingNum == 0)
                     {
                         Console.WriteLine($"round:{++idx}, total:{total}, tx:0, pending:{pendingNum}, waiting:{waitingNum}, error:{error}");
                         break;
                     }
 
-                    cc = Math.Min(transNum - total, cc);
+                    cc = Math.Min(transferCount - total, cc);
                 }
 
                 Console.WriteLine($"round:{++idx}, total:{total}, tx:{cc}, pending:{pendingNum}, waiting:{waitingNum}, error:{error}");
@@ -175,7 +287,7 @@ namespace Zoro.Plugins
                     {
                         Interlocked.Decrement(ref pendingNum);
 
-                        CallTransfer(chainHash);
+                        CallTransfer(chainHash, randomTargetAddress ? GetRandomTargetAddress(rnd) : targetAddress);
                     });
                 }
 
@@ -200,7 +312,7 @@ namespace Zoro.Plugins
             }
         }
 
-        protected async Task NativeNEP5Transfer(string chainHash)
+        protected async Task NativeNEP5Transfer(string chainHash, UInt160 targetAddress)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -212,7 +324,7 @@ namespace Zoro.Plugins
             }
         }
 
-        protected async Task NEP5Transfer(string chainHash)
+        protected async Task NEP5Transfer(string chainHash, UInt160 targetAddress)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -224,7 +336,7 @@ namespace Zoro.Plugins
             }
         }
 
-        protected async Task BCPTransfer(string chainHash)
+        protected async Task BCPTransfer(string chainHash, UInt160 targetAddress)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {

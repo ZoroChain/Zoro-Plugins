@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using System;
 
 namespace Zoro.Plugins
 {
@@ -9,6 +10,13 @@ namespace Zoro.Plugins
         public string TargetChainHash { get; }
         public string NEP5Hash { get; }
         public string NativeNEP5Hash { get; }
+        public int EnableManualParam { get; }
+        public int TransactionType { get; }
+        public int ConcurrencyCount { get; }
+        public int TransferCount { get; }
+        public int TransferValue { get; }
+        public int RandomTargetAddress { get; }
+        public int AutoConcurrencyAdjustment { get; }
 
         public static Settings Default { get; private set; }
 
@@ -19,6 +27,19 @@ namespace Zoro.Plugins
             this.TargetChainHash = section.GetSection("TargetChainHash").Value;
             this.NEP5Hash = section.GetSection("NEP5Hash").Value;
             this.NativeNEP5Hash = section.GetSection("NativeNEP5").Value;
+            this.EnableManualParam = GetValueOrDefault(section.GetSection("EnableManualParam"), 1, p => int.Parse(p));
+            this.TransactionType = GetValueOrDefault(section.GetSection("TransactionType"), 0, p => int.Parse(p));
+            this.ConcurrencyCount = GetValueOrDefault(section.GetSection("ConcurrencyCount"), 0, p => int.Parse(p));
+            this.TransferCount = GetValueOrDefault(section.GetSection("TransferCount"), 0, p => int.Parse(p));
+            this.TransferValue = GetValueOrDefault(section.GetSection("TransferValue"), 0, p => int.Parse(p));
+            this.RandomTargetAddress = GetValueOrDefault(section.GetSection("RandomTargetAddress"), 0, p => int.Parse(p));
+            this.AutoConcurrencyAdjustment = GetValueOrDefault(section.GetSection("AutoConcurrencyAdjustment"), 0, p => int.Parse(p));
+        }
+
+        internal T GetValueOrDefault<T>(IConfigurationSection section, T defaultValue, Func<string, T> selector)
+        {
+            if (section.Value == null) return defaultValue;
+            return selector(section.Value);
         }
 
         public static void Load(IConfigurationSection section)
