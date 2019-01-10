@@ -10,6 +10,7 @@ namespace Zoro.Plugins
     {
         public int MaxTransactionsPerBlock { get; }
         public BlockedAccounts BlockedAccounts { get; }
+        public string RelativePath { get; }
 
         public static Settings Default { get; private set; }
 
@@ -17,6 +18,7 @@ namespace Zoro.Plugins
         {
             this.MaxTransactionsPerBlock = GetValueOrDefault(section.GetSection("MaxTransactionsPerBlock"), 500, p => int.Parse(p));
             this.BlockedAccounts = new BlockedAccounts(section.GetSection("BlockedAccounts"));
+            this.RelativePath = section.GetSection("RelativePath")?.Value ?? "";
         }
 
         public T GetValueOrDefault<T>(IConfigurationSection section, T defaultValue, Func<string, T> selector)
