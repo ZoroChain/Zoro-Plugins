@@ -50,6 +50,10 @@ namespace Zoro.Plugins
                     // 用MagicNumber加上ChainHash作为ApplicationLog数据库的文件名
                     string path = string.Format(Settings.Default.Path, Message.Magic.ToString("X8"), chainHash.ToArray().Reverse().ToHexString());
 
+                    string relativePath = Settings.Default.RelativePath;
+                    if (relativePath.Length > 0)
+                        path = relativePath + path;
+
                     Directory.CreateDirectory(path);
 
                     DB db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
