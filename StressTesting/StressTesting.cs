@@ -131,6 +131,9 @@ namespace Zoro.Plugins
 
         protected void InitializeRandomTargetAddressList(int count)
         {
+            int maximum = 50000;
+            count = Math.Min(maximum, count);
+
             string filename = "targetaddress.dat";
             if (!LoadTargetAddress(filename, count))
             {
