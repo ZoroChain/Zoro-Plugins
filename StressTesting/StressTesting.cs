@@ -22,15 +22,15 @@ namespace Zoro.Plugins
         private UInt160 nativeNEP5AssetId;
         private string transferValue;
         private int transactionType = 0;
-        private int cocurrentNum = 0;
+        private int concurrencyCount = 0;
         private int transferCount = 0;
         private int waitingNum = 0;
         private int step = 0;
         private int error = 0;
         private bool randomTargetAddress = false;
+        private bool randomGasPrice = false;
         private UInt160[] targetAddressList;
 
-        private Fixed8 GasPrice = Fixed8.One;
         private Dictionary<string, Fixed8> GasLimit = new Dictionary<string, Fixed8>();
 
         private CancellationTokenSource cancelTokenSource;
@@ -62,7 +62,7 @@ namespace Zoro.Plugins
             {
                 Console.Write("Transaction Type, 0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP:");
                 var param1 = Console.ReadLine();
-                Console.Write("Concurrency number:");
+                Console.Write("Concurrency count:");
                 var param2 = Console.ReadLine();
                 Console.Write("Totoal transaction count:");
                 var param3 = Console.ReadLine();
@@ -70,24 +70,28 @@ namespace Zoro.Plugins
                 var param4 = Console.ReadLine();
                 Console.Write("Random target address, 0 - no, 1 - yes:");
                 var param5 = Console.ReadLine();
-                Console.Write("Automatic concurrency adjustment, 0 - no, 1 - yes:");
+                Console.Write("Random gas price, 0 - no, 1 - yes:");
                 var param6 = Console.ReadLine();
+                Console.Write("Automatic concurrency adjustment, 0 - no, 1 - yes:");
+                var param7 = Console.ReadLine();
 
                 transactionType = int.Parse(param1);
                 transferCount = int.Parse(param3);
-                cocurrentNum = int.Parse(param2);
+                concurrencyCount = int.Parse(param2);
                 transferValue = param4;
                 randomTargetAddress = int.Parse(param5) == 1;
-                step = int.Parse(param6) == 1 ? Math.Max(cocurrentNum / 5, 10) : 0;
+                randomGasPrice = int.Parse(param6) == 1;
+                step = int.Parse(param7) == 1 ? Math.Max(concurrencyCount / 5, 10) : 0;
             }
             else
             {
                 transactionType = Settings.Default.TransactionType;
                 transferCount = Settings.Default.TransferCount;
-                cocurrentNum = Settings.Default.ConcurrencyCount;
+                concurrencyCount = Settings.Default.ConcurrencyCount;
                 transferValue = Settings.Default.TransferValue.ToString();
                 randomTargetAddress = Settings.Default.RandomTargetAddress == 1;
-                step = Settings.Default.AutoConcurrencyAdjustment == 1 ? Math.Max(cocurrentNum / 5, 10) : 0;
+                randomGasPrice = Settings.Default.RandomGasPrice == 1;
+                step = Settings.Default.AutoConcurrencyAdjustment == 1 ? Math.Max(concurrencyCount / 5, 10) : 0;                
             }
         
             string chainHash = Settings.Default.TargetChainHash;
@@ -216,21 +220,21 @@ namespace Zoro.Plugins
             return targetAddressList[index];
         }
 
-        protected async void CallTransfer(string chainHash, UInt160 targetAddress)
+        protected async void CallTransfer(string chainHash, UInt160 targetAddress, Fixed8 gasPrice)
         {
             Interlocked.Increment(ref waitingNum);
 
             if (transactionType == 0)
             {
-                await NEP5Transfer(chainHash, targetAddress);
+                await NEP5Transfer(chainHash, targetAddress, gasPrice);
             }
             else if (transactionType == 1)
             {
-                await NativeNEP5Transfer(chainHash, targetAddress);
+                await NativeNEP5Transfer(chainHash, targetAddress, gasPrice);
             }
             else if (transactionType == 2)
             {
-                await BCPTransfer(chainHash, targetAddress);
+                await BCPTransfer(chainHash, targetAddress, gasPrice);
             }
 
             Interlocked.Decrement(ref waitingNum);
@@ -240,11 +244,12 @@ namespace Zoro.Plugins
         {
             Random rnd = new Random();
             TimeSpan oneSecond = TimeSpan.FromSeconds(1);
+            Fixed8 gasPrice = Fixed8.One;
 
             int idx = 0;
             int total = 0;
 
-            int cc = step > 0 ? Math.Min(cocurrentNum, step) : cocurrentNum;
+            int cc = step > 0 ? Math.Min(concurrencyCount, step) : concurrencyCount;
 
             int lastWaiting = 0;
             int pendingNum = 0;
@@ -285,12 +290,16 @@ namespace Zoro.Plugins
 
                 for (int i = 0; i < cc; i++)
                 {
-                    int j = i;
                     Task.Run(() =>
                     {
                         Interlocked.Decrement(ref pendingNum);
 
-                        CallTransfer(chainHash, randomTargetAddress ? GetRandomTargetAddress(rnd) : targetAddress);
+                        Fixed8 price = gasPrice;
+
+                        if (randomGasPrice)
+                            Fixed8.TryParse((rnd.Next(1, 1000) * 0.0001).ToString(), out gasPrice);
+
+                        CallTransfer(chainHash, randomTargetAddress ? GetRandomTargetAddress(rnd) : targetAddress, price);
                     });
                 }
 
@@ -303,49 +312,49 @@ namespace Zoro.Plugins
 
                 if (step > 0)
                 {
-                    if (pendingNum > cocurrentNum)
+                    if (pendingNum > concurrencyCount)
                     {
                         cc = Math.Max(cc - step, 0);
                     }
-                    else if (pendingNum < cocurrentNum)
+                    else if (pendingNum < concurrencyCount)
                     {
-                        cc = Math.Min(cc + step, cocurrentNum);
+                        cc = Math.Min(cc + step, concurrencyCount);
                     }
                 }
             }
         }
 
-        protected async Task NativeNEP5Transfer(string chainHash, UInt160 targetAddress)
+        protected async Task NativeNEP5Transfer(string chainHash, UInt160 targetAddress, Fixed8 gasPrice)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", nativeNEP5AssetId, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NativeNEP5Transfer"], GasPrice);
+                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NativeNEP5Transfer"], gasPrice);
 
                 OnRelayResult(result);
             }
         }
 
-        protected async Task NEP5Transfer(string chainHash, UInt160 targetAddress)
+        protected async Task NEP5Transfer(string chainHash, UInt160 targetAddress, Fixed8 gasPrice)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 sb.EmitAppCall(nep5ContractHash, "transfer", scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NEP5Transfer"], GasPrice);
+                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NEP5Transfer"], gasPrice);
 
                 OnRelayResult(result);
             }
         }
 
-        protected async Task BCPTransfer(string chainHash, UInt160 targetAddress)
+        protected async Task BCPTransfer(string chainHash, UInt160 targetAddress, Fixed8 gasPrice)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", Genesis.BcpContractAddress, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["BCPTransfer"], GasPrice);
+                RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["BCPTransfer"], gasPrice);
 
                 OnRelayResult(result);
             }
