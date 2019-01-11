@@ -332,7 +332,7 @@ namespace Zoro.Plugins
 
                 RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NativeNEP5Transfer"], gasPrice);
 
-                OnRelayResult(result);
+                ParseResult(result);
             }
         }
 
@@ -344,7 +344,7 @@ namespace Zoro.Plugins
 
                 RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["NEP5Transfer"], gasPrice);
 
-                OnRelayResult(result);
+                ParseResult(result);
             }
         }
 
@@ -356,11 +356,11 @@ namespace Zoro.Plugins
 
                 RelayResultReason result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasLimit["BCPTransfer"], gasPrice);
 
-                OnRelayResult(result);
+                ParseResult(result);
             }
         }
 
-        private void OnRelayResult(RelayResultReason reason)
+        private void ParseResult(RelayResultReason reason)
         {
             if (reason != RelayResultReason.Succeed)
             {
