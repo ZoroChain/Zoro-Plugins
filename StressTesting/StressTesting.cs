@@ -297,7 +297,7 @@ namespace Zoro.Plugins
                         Fixed8 price = gasPrice;
 
                         if (randomGasPrice)
-                            Fixed8.TryParse((rnd.Next(1, 1000) * 0.0001).ToString(), out gasPrice);
+                            Fixed8.TryParse((rnd.Next(1, 1000) * 0.0001).ToString(), out price);
 
                         CallTransfer(chainHash, randomTargetAddress ? GetRandomTargetAddress(rnd) : targetAddress, price);
                     });
