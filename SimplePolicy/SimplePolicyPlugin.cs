@@ -59,6 +59,7 @@ namespace Zoro.Plugins
             if (string.IsNullOrEmpty(log_dictionary)) return;
             lock (log_dictionary)
             {
+                Directory.CreateDirectory(log_dictionary);
                 string path = Path.Combine(log_dictionary, $"{now:yyyy-MM-dd}.log");
                 File.AppendAllLines(path, new[] { line });
             }
@@ -77,8 +78,6 @@ namespace Zoro.Plugins
                     log_dictionary = Path.Combine(AppContext.BaseDirectory, path);
 
                 log_dicts.TryAdd(chainHash, log_dictionary);
-
-                Directory.CreateDirectory(log_dictionary);
             }
 
             return log_dictionary;

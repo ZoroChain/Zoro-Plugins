@@ -205,7 +205,7 @@ namespace Zoro.Plugins
                             {
                                 system.Blockchain.Ask<Blockchain.ImportCompleted>(new Blockchain.Import
                                 {
-                                    Blocks = GetBlocks(blockchain, zs, true)
+                                    Blocks = GetBlocks(blockchain, zs)
                                 }).Wait();
                             }
 
@@ -220,7 +220,7 @@ namespace Zoro.Plugins
                             {
                                 system.Blockchain.Ask<Blockchain.ImportCompleted>(new Blockchain.Import
                                 {
-                                    Blocks = GetBlocks(blockchain, fs, true)
+                                    Blocks = GetBlocks(blockchain, fs)
                                 }).Wait();
                             }
                         }
