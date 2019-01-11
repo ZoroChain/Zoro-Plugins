@@ -25,7 +25,6 @@ namespace Zoro.Plugins
         private int concurrencyCount = 0;
         private int transferCount = 0;
         private int waitingNum = 0;
-        private int step = 0;
         private int error = 0;
         private bool randomTargetAddress = false;
         private bool randomGasPrice = false;
@@ -72,8 +71,6 @@ namespace Zoro.Plugins
                 var param5 = Console.ReadLine();
                 Console.Write("Random gas price, 0 - no, 1 - yes:");
                 var param6 = Console.ReadLine();
-                Console.Write("Automatic concurrency adjustment, 0 - no, 1 - yes:");
-                var param7 = Console.ReadLine();
 
                 transactionType = int.Parse(param1);
                 transferCount = int.Parse(param3);
@@ -81,7 +78,6 @@ namespace Zoro.Plugins
                 transferValue = param4;
                 randomTargetAddress = int.Parse(param5) == 1;
                 randomGasPrice = int.Parse(param6) == 1;
-                step = int.Parse(param7) == 1 ? Math.Max(concurrencyCount / 5, 10) : 0;
             }
             else
             {
@@ -91,7 +87,6 @@ namespace Zoro.Plugins
                 transferValue = Settings.Default.TransferValue.ToString();
                 randomTargetAddress = Settings.Default.RandomTargetAddress == 1;
                 randomGasPrice = Settings.Default.RandomGasPrice == 1;
-                step = Settings.Default.AutoConcurrencyAdjustment == 1 ? Math.Max(concurrencyCount / 5, 10) : 0;                
             }
         
             string chainHash = Settings.Default.TargetChainHash;
@@ -249,7 +244,7 @@ namespace Zoro.Plugins
             int idx = 0;
             int total = 0;
 
-            int cc = step > 0 ? Math.Min(concurrencyCount, step) : concurrencyCount;
+            int cc = concurrencyCount;
 
             int lastWaiting = 0;
             int pendingNum = 0;
@@ -308,18 +303,6 @@ namespace Zoro.Plugins
                 if (span < oneSecond)
                 {
                     Thread.Sleep(oneSecond - span);
-                }
-
-                if (step > 0)
-                {
-                    if (pendingNum > concurrencyCount)
-                    {
-                        cc = Math.Max(cc - step, 0);
-                    }
-                    else if (pendingNum < concurrencyCount)
-                    {
-                        cc = Math.Min(cc + step, concurrencyCount);
-                    }
                 }
             }
         }

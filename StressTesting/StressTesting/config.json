@@ -11,7 +11,6 @@
     "TransferCount": 50000,
     "TransferValue": 1,
     "RandomTargetAddress": 1,
-    "AutoConcurrencyAdjustment": 0,
     "RandomGasPrice": 1
   }
 }

@@ -16,7 +16,6 @@ namespace Zoro.Plugins
         public int TransferCount { get; }
         public int TransferValue { get; }
         public int RandomTargetAddress { get; }
-        public int AutoConcurrencyAdjustment { get; }
         public int RandomGasPrice { get; }
 
         public static Settings Default { get; private set; }
@@ -34,7 +33,6 @@ namespace Zoro.Plugins
             this.TransferCount = GetValueOrDefault(section.GetSection("TransferCount"), 0, p => int.Parse(p));
             this.TransferValue = GetValueOrDefault(section.GetSection("TransferValue"), 0, p => int.Parse(p));
             this.RandomTargetAddress = GetValueOrDefault(section.GetSection("RandomTargetAddress"), 0, p => int.Parse(p));
-            this.AutoConcurrencyAdjustment = GetValueOrDefault(section.GetSection("AutoConcurrencyAdjustment"), 0, p => int.Parse(p));
             this.RandomGasPrice = GetValueOrDefault(section.GetSection("RandomGasPrice"), 0, p => int.Parse(p));
         }
 
