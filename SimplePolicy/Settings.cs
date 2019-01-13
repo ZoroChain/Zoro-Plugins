@@ -10,6 +10,7 @@ namespace Zoro.Plugins
     {
         public int MaxTransactionsPerBlock { get; }
         public BlockedAccounts BlockedAccounts { get; }
+        public Fixed8 GasPriceThreshold { get; }
         public string RelativePath { get; }
 
         public static Settings Default { get; private set; }
@@ -18,6 +19,7 @@ namespace Zoro.Plugins
         {
             this.MaxTransactionsPerBlock = GetValueOrDefault(section.GetSection("MaxTransactionsPerBlock"), 500, p => int.Parse(p));
             this.BlockedAccounts = new BlockedAccounts(section.GetSection("BlockedAccounts"));
+            this.GasPriceThreshold = GetValueOrDefault(section.GetSection("GasPriceThreshold"), Fixed8.FromDecimal(0.0001m), p => Fixed8.Parse(p));
             this.RelativePath = section.GetSection("RelativePath")?.Value ?? "";
         }
 

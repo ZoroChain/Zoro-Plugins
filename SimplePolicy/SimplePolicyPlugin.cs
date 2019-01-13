@@ -24,6 +24,12 @@ namespace Zoro.Plugins
 
         public bool FilterForMemoryPool(Transaction tx)
         {
+            if (tx is InvocationTransaction transaction)
+            {
+                if (transaction.GasPrice < Settings.Default.GasPriceThreshold)
+                    return false;
+            }
+
             switch (Settings.Default.BlockedAccounts.Type)
             {
                 case PolicyType.AllowAll:
