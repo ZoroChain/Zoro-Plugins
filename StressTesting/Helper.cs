@@ -207,7 +207,7 @@ namespace Zoro.Plugins
         {
             ZoroSystem system = ZoroChainSystem.Singleton.GetZoroSystem(chainHash);
 
-            RelayResultReason reason = await system.Blockchain.Ask<RelayResultReason>(tx);
+            RelayResultReason reason = await system.TxnPool.Ask<RelayResultReason>(tx);
 
             return reason;
         }
