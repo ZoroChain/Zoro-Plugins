@@ -142,6 +142,9 @@ namespace Zoro.Plugins
 
             Message msg = Message.Create("rpc-response", payload.ToArray());
             server.SendTo(session, msg.ToArray());
+
+            if (Settings.Default.DebugMode)
+                Log($"RpcAgent send data, length:{msg.Size}");
         }
 
         private void SendRpcException(TcpSocketSession session, Guid guid, Exception exception)
