@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using Zoro.Wallets;
 using Zoro.Ledger;
+using Zoro.TxnPool;
 using Zoro.IO;
 using Neo.VM;
 
@@ -100,6 +101,10 @@ namespace Zoro.Plugins
             nep5ContractHash = UInt160.Parse(Settings.Default.NEP5Hash);
             nativeNEP5AssetId = UInt160.Parse(Settings.Default.NativeNEP5Hash);
 
+            TransactionPool txnPool = ZoroChainSystem.Singleton.GetTransactionPool(chainHash);
+            if (txnPool == null)
+                return true;
+
             if (randomTargetAddress)
             {
                 PluginManager.EnableLog(false);
@@ -119,7 +124,7 @@ namespace Zoro.Plugins
 
             cancelTokenSource = new CancellationTokenSource();
 
-            Task.Run(() => RunTask(chainHash));
+            Task.Run(() => RunTask(chainHash, txnPool));
 
             Console.WriteLine("Input [enter] to stop:");
             var input = Console.ReadLine();
@@ -235,7 +240,7 @@ namespace Zoro.Plugins
             Interlocked.Decrement(ref waitingNum);
         }
 
-        public void RunTask(string chainHash)
+        public void RunTask(string chainHash, TransactionPool txnPool)
         {
             Random rnd = new Random();
             TimeSpan oneSecond = TimeSpan.FromSeconds(1);
@@ -269,6 +274,10 @@ namespace Zoro.Plugins
                     }
 
                     cc = Math.Min(transferCount - total, cc);
+
+                    int mempool_count = txnPool.GetMemoryPoolCount();
+                    if (mempool_count + cc >= 50000)
+                        cc = 0;
                 }
 
                 Console.WriteLine($"round:{++idx}, total:{total}, tx:{cc}, pending:{pendingNum}, waiting:{waitingNum}, error:{error}");
