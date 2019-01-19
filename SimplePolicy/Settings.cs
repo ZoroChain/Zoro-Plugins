@@ -28,6 +28,7 @@ namespace Zoro.Plugins
             if (section.Value == null) return defaultValue;
             return selector(section.Value);
         }
+
         public static void Load(IConfigurationSection section)
         {
             Default = new Settings(section);

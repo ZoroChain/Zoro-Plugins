@@ -59,17 +59,22 @@ namespace Zoro.Plugins
             }
             else
             {
-                Log(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session.LocalEndPoint));
+                if (Settings.Default.DebugMode)
+                    Log(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session.LocalEndPoint));
             }
         }
 
         void OnClientDisconnected(object sender, TcpClientDisconnectedEventArgs e)
         {
-            Log(string.Format("TCP client {0} has disconnected.", e.Session));
+            if (Settings.Default.DebugMode)
+                Log(string.Format("TCP client {0} has disconnected.", e.Session));
         }
 
         void OnClientDataReceived(object sender, TcpClientDataReceivedEventArgs e)
         {
+            if (Settings.Default.DebugMode)
+                Log($"RpcAgent recv data, length:{e.DataLength}");
+
             ; byte[] data = e.Data.Skip(e.DataOffset).Take(e.DataLength).ToArray();
             Message msg = data.AsSerializable<Message>();
 
@@ -137,6 +142,9 @@ namespace Zoro.Plugins
 
             Message msg = Message.Create("rpc-response", payload.ToArray());
             server.SendTo(session, msg.ToArray());
+
+            if (Settings.Default.DebugMode)
+                Log($"RpcAgent send data, length:{msg.Size}");
         }
 
         private void SendRpcException(TcpSocketSession session, Guid guid, Exception exception)
@@ -145,6 +153,9 @@ namespace Zoro.Plugins
 
             Message msg = Message.Create("rpc-error", payload.ToArray());
             server.SendTo(session, msg.ToArray());
+
+            if (Settings.Default.DebugMode)
+                Log($"RpcAgent send data, length:{msg.Size}");
         }
     }
 }
