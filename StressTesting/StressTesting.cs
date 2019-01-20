@@ -273,7 +273,7 @@ namespace Zoro.Plugins
                         break;
                     }
 
-                    cc = Math.Min(transferCount - total, cc);
+                    cc = Math.Min(transferCount - total, concurrencyCount);
 
                     int mempool_count = txnPool.GetMemoryPoolCount();
                     if (mempool_count + cc >= 50000)
