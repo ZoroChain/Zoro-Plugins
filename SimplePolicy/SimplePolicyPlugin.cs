@@ -48,8 +48,7 @@ namespace Zoro.Plugins
             if (!(transactions is IReadOnlyList<Transaction> tx_list))
                 tx_list = transactions.ToArray();
 
-            Transaction[] txs = tx_list.OrderByDescending(p => p.SystemFee / p.Size)
-                .ThenByDescending(p => p.SystemFee)
+            Transaction[] txs = tx_list.OrderByDescending(p => p.FeePrice)
                 .Take(Settings.Default.MaxTransactionsPerBlock - 1)
                 .ToArray();
 
