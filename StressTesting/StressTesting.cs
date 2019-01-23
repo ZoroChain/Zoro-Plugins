@@ -28,6 +28,8 @@ namespace Zoro.Plugins
         private int error = 0;
         private bool randomTargetAddress = false;
         private bool randomGasPrice = false;
+        private bool preventOverflow = false;
+        private bool printErrorReason = false;
         private UInt160[] targetAddressList;
 
         private Dictionary<string, Fixed8> GasLimit = new Dictionary<string, Fixed8>();
@@ -88,7 +90,10 @@ namespace Zoro.Plugins
                 randomTargetAddress = Settings.Default.RandomTargetAddress == 1;
                 randomGasPrice = Settings.Default.RandomGasPrice == 1;
             }
-        
+
+            preventOverflow = Settings.Default.PreventOverflow == 1;
+            printErrorReason = Settings.Default.PrintErrorReason == 1;
+
             string chainHash = Settings.Default.TargetChainHash;
             string WIF = Settings.Default.WIF;
             string targetWIF = Settings.Default.TargetWIF;
@@ -274,9 +279,12 @@ namespace Zoro.Plugins
 
                     cc = Math.Min(transferCount - total, concurrencyCount);
 
-                    int mempool_count = blockchain.GetMemoryPoolCount();
-                    if (mempool_count + cc + pendingNum + waitingNum >= 50000)
-                        cc = 0;
+                    if (preventOverflow)
+                    {
+                        int mempool_count = blockchain.GetMemoryPoolCount();
+                        if (mempool_count + cc + pendingNum + waitingNum >= 50000)
+                            cc = 0;
+                    }
                 }
 
                 Console.WriteLine($"round:{++idx}, total:{total}, tx:{cc}, pending:{pendingNum}, waiting:{waitingNum}, error:{error}");
@@ -356,6 +364,9 @@ namespace Zoro.Plugins
             if (reason != RelayResultReason.Succeed)
             {
                 Interlocked.Increment(ref error);
+
+                if (!printErrorReason)
+                    return;
 
                 switch (reason)
                 {

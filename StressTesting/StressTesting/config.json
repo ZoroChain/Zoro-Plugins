@@ -11,6 +11,8 @@
     "TransferCount": 50000,
     "TransferValue": 1,
     "RandomTargetAddress": 1,
-    "RandomGasPrice": 1
+    "RandomGasPrice": 1,
+    "PreventOverflow": 1,
+    "PrintErrorReason": 0
   }
 }
