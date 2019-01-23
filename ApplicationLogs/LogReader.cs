@@ -28,6 +28,15 @@ namespace Zoro.Plugins
             Settings.Load(GetConfiguration());
         }
 
+        public override void Dispose()
+        {
+            var actors = loggers.Select(p => p.Value).ToArray();
+            foreach (var actor in actors)
+            {
+                ZoroChainSystem.Singleton.ActorSystem.Stop(actor);
+            }
+        }
+
         // 处理ZoroSystem发来的消息通知
         public override bool OnMessage(object message)
         {
