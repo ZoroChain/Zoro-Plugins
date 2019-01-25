@@ -248,7 +248,7 @@ namespace Zoro.Plugins
         {
             Random rnd = new Random();
             TimeSpan oneSecond = TimeSpan.FromSeconds(1);
-            Fixed8 gasPrice = Fixed8.One;
+            Fixed8 gasPrice = Fixed8.FromDecimal(0.00001m);
 
             int idx = 0;
             int total = 0;
@@ -308,7 +308,7 @@ namespace Zoro.Plugins
                         Fixed8 price = gasPrice;
 
                         if (randomGasPrice)
-                            Fixed8.TryParse((rnd.Next(1, 1000) * 0.0001).ToString(), out price);
+                            Fixed8.TryParse((rnd.Next(1, 1000) * 0.00001).ToString(), out price);
 
                         CallTransfer(chainHash, randomTargetAddress ? GetRandomTargetAddress(rnd) : targetAddress, price);
                     });
