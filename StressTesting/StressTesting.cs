@@ -44,9 +44,9 @@ namespace Zoro.Plugins
         public StressTesting(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal((decimal)4.5);
-            GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1);
-            GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1);
+            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal(4216);
+            GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1000);
+            GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1000);
         }
 
         public override bool OnMessage(object message)
