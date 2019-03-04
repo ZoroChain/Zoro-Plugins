@@ -44,9 +44,9 @@ namespace Zoro.Plugins
         public StressTesting(PluginManager pluginMgr)
             : base(pluginMgr)
         {
-            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal((decimal)4.5);
-            GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1);
-            GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1);
+            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal(4216);
+            GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1000);
+            GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1000);
         }
 
         public override bool OnMessage(object message)
@@ -248,7 +248,7 @@ namespace Zoro.Plugins
         {
             Random rnd = new Random();
             TimeSpan oneSecond = TimeSpan.FromSeconds(1);
-            Fixed8 gasPrice = Fixed8.One;
+            Fixed8 gasPrice = Fixed8.FromDecimal(0.00001m);
 
             int idx = 0;
             int total = 0;
@@ -308,7 +308,7 @@ namespace Zoro.Plugins
                         Fixed8 price = gasPrice;
 
                         if (randomGasPrice)
-                            Fixed8.TryParse((rnd.Next(1, 1000) * 0.0001).ToString(), out price);
+                            Fixed8.TryParse((rnd.Next(1, 1000) * 0.00001).ToString(), out price);
 
                         CallTransfer(chainHash, randomTargetAddress ? GetRandomTargetAddress(rnd) : targetAddress, price);
                     });
