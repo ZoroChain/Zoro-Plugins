@@ -1,0 +1,49 @@
+﻿{
+  "PluginConfiguration": {
+    "Path": "Chain_{0}",
+    "MySql": {
+      "database": "block",
+      "server": "115.159.68.43",
+      "user id": "root",
+      "Password": "H@ngJIA123",
+      "sslmode": "None",
+      "Pooling": "True",
+      "MinimumPoolSize": "3",
+      "maximumpoolsize": "30",
+      "ConnectionLifeTime": "300",
+      "Connection Timeout": "30",
+      "Allow User Variables": "True"
+
+    },
+    "RPC": {
+      "url": "http://47.52.146.36:20331/"
+    },
+    "Chains": [
+      {
+        "Hash": "",
+        "Name": "Root+",
+        "StartHeight": -1
+      },
+      {
+        "Hash": "",
+        "Name": "Game+",
+        "StartHeight": -1
+      },
+      {
+        "Hash": "",
+        "Name": "Test+",
+        "StartHeight": -1
+      },
+      {
+        "Hash": "",
+        "Name": "App+",
+        "StartHeight": -1
+      },
+      {
+        "Hash": "",
+        "Name": "Demo+",
+        "StartHeight": -1
+      }
+    ]
+  }
+}

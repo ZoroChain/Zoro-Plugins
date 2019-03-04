@@ -32,6 +32,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RpcSecurity", "RpcSecurity\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zoro-Cli", "..\Zoro-Cli\zoro-cli\Zoro-Cli.csproj", "{06B3C8DF-B66D-40F9-835C-684B4C73B967}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Spider", "Spider\Spider.csproj", "{614644F5-EB6F-4E67-A92D-280040DC58EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,6 +80,10 @@ Global
 		{06B3C8DF-B66D-40F9-835C-684B4C73B967}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06B3C8DF-B66D-40F9-835C-684B4C73B967}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06B3C8DF-B66D-40F9-835C-684B4C73B967}.Release|Any CPU.Build.0 = Release|Any CPU
+		{614644F5-EB6F-4E67-A92D-280040DC58EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{614644F5-EB6F-4E67-A92D-280040DC58EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{614644F5-EB6F-4E67-A92D-280040DC58EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{614644F5-EB6F-4E67-A92D-280040DC58EE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -93,6 +99,7 @@ Global
 		{02252263-D37C-4589-BA60-E198563BEB08} = {E65067AA-7E65-4C72-B621-F7B5E8550C3A}
 		{D0D3BE6E-1171-4922-9FC9-3B48A2BBAA44} = {076D5740-9E75-46B9-8E1F-10375E1B12F6}
 		{06B3C8DF-B66D-40F9-835C-684B4C73B967} = {7BE82433-8E6D-49AF-B640-5D6CD45ED93C}
+		{614644F5-EB6F-4E67-A92D-280040DC58EE} = {076D5740-9E75-46B9-8E1F-10375E1B12F6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61D3ADE6-BBFC-402D-AB42-1C71C9F9EDE3}
