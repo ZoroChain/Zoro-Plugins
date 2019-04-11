@@ -1,22 +1,22 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Zoro.IO.Data.LevelDB;
 using Zoro.IO.Json;
+using Zoro.Ledger;
 using Zoro.Network.RPC;
 using Zoro.Network.P2P;
+using Neo.VM;
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
-using Akka.Actor;
+using Snapshot = Zoro.Persistence.Snapshot;
 
 namespace Zoro.Plugins
 {
-    public class LogReader : Plugin, IRpcPlugin
+    public class LogReader : Plugin, IRpcPlugin, IPersistencePlugin
     {
-        private ConcurrentDictionary<UInt160, IActorRef> loggers = new ConcurrentDictionary<UInt160, IActorRef>();
         private ConcurrentDictionary<UInt160, DB> dbs = new ConcurrentDictionary<UInt160, DB>();
-
-        public override string Name => "ApplicationLogs";
 
         public LogReader(PluginManager pluginMgr)
             : base(pluginMgr)
@@ -30,11 +30,11 @@ namespace Zoro.Plugins
 
         public override void Dispose()
         {
-            var actors = loggers.Select(p => p.Value).ToArray();
-            foreach (var actor in actors)
+            foreach (DB db in dbs.Values)
             {
-                ZoroChainSystem.Singleton.ActorSystem.Stop(actor);
+                db.Dispose();
             }
+            dbs.Clear();
         }
 
         // 处理ZoroSystem发来的消息通知
@@ -50,7 +50,7 @@ namespace Zoro.Plugins
 
         private void CreateLogger(UInt160 chainHash)
         {
-            if (!loggers.ContainsKey(chainHash))
+            if (!dbs.ContainsKey(chainHash))
             {
                 // 根据链的Hash，获取对应的ZoroSystem对象
                 ZoroSystem system = ZoroChainSystem.Singleton.GetZoroSystem(chainHash);
@@ -67,11 +67,6 @@ namespace Zoro.Plugins
 
                     DB db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
 
-                    // 创建Actor对象来处理Blockchain发来的消息通知
-                    IActorRef logger = system.ActorOf(Logger.Props(this, system.Blockchain, db, chainHash), "ApplicationLogs");
-
-                    // 记录创建的Actor和Db对象
-                    loggers.TryAdd(chainHash, logger);
                     dbs.TryAdd(chainHash, db);
                 }
             }
@@ -79,7 +74,6 @@ namespace Zoro.Plugins
 
         public void RemoveLogger(UInt160 chainHash)
         {
-            loggers.TryRemove(chainHash, out IActorRef _);
             dbs.TryRemove(chainHash, out DB _);
         }
 
@@ -108,5 +102,59 @@ namespace Zoro.Plugins
             return JObject.Parse(value.ToString());
         }
 
+        public void OnPersist(Snapshot snapshot, IReadOnlyList<Blockchain.ApplicationExecuted> applicationExecutedList)
+        {
+            if (!dbs.TryGetValue(snapshot.Blockchain.ChainHash, out DB db)) return;
+
+            WriteBatch writeBatch = new WriteBatch();
+
+            foreach (var appExec in applicationExecutedList)
+            {
+                JObject json = new JObject();
+                json["txid"] = appExec.Transaction.Hash.ToString();
+                json["executions"] = appExec.ExecutionResults.Select(p =>
+                {
+                    JObject execution = new JObject();
+                    execution["trigger"] = p.Trigger;
+                    execution["contract"] = p.ScriptHash.ToString();
+                    execution["vmstate"] = p.VMState;
+                    execution["gas_consumed"] = p.GasConsumed.ToString();
+                    try
+                    {
+                        execution["stack"] = p.Stack.Select(q => q.ToParameter().ToJson()).ToArray();
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        execution["stack"] = "error: recursive reference";
+                    }
+                    execution["notifications"] = p.Notifications.Select(q =>
+                    {
+                        JObject notification = new JObject();
+                        notification["contract"] = q.ScriptHash.ToString();
+                        try
+                        {
+                            notification["state"] = q.State.ToParameter().ToJson();
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            notification["state"] = "error: recursive reference";
+                        }
+                        return notification;
+                    }).ToArray();
+                    return execution;
+                }).ToArray();
+                writeBatch.Put(appExec.Transaction.Hash.ToArray(), json.ToString());
+            }
+            db.Write(WriteOptions.Default, writeBatch);
+        }
+
+        public void OnCommit(Snapshot snapshot)
+        {
+        }
+
+        public bool ShouldThrowExceptionFromCommit(Exception ex)
+        {
+            return false;
+        }
     }
 }
