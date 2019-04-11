@@ -40,11 +40,6 @@ namespace Zoro.Plugins
             server?.Shutdown();
         }
 
-        public override void SetWallet(Wallet wallet)
-        {
-            handler.SetWallet(wallet);
-        }
-
         void Log(string message)
         {
             PluginMgr.Log(nameof(RpcAgent), LogLevel.Info, message, UInt160.Zero);
