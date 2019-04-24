@@ -19,26 +19,19 @@ namespace Zoro.Plugins
             return true;
         }
 
-        public void Save(MySqlConnection conn, JObject jObject, uint blockHeight, uint blockTime)
+        public void Save(MySqlConnection conn, JObject jObject)
         {                      
             List<string> slist = new List<string>();
             slist.Add(SpiderHelper.getString(jObject["address"].ToString()));
             slist.Add(SpiderHelper.getString(jObject["txid"].ToString()));
-            slist.Add(blockHeight.ToString());
-            slist.Add(blockTime.ToString());
-
                 
-            if (ChainSpider.checkHeight == int.Parse(blockHeight.ToString()))
-            {
-                Dictionary<string, string> where = new Dictionary<string, string>();
-                where.Add("addr", SpiderHelper.getString(jObject["address"].ToString()));
-                where.Add("blockindex", blockHeight.ToString());
-                where.Add("txid", SpiderHelper.getString(jObject["txid"].ToString()));
-                MysqlConn.Delete(conn, DataTableName, where);
-            }
-            {
-                MysqlConn.ExecuteDataInsert(conn, DataTableName, slist);
-            }
+
+            Dictionary<string, string> where = new Dictionary<string, string>();
+            where.Add("addr", SpiderHelper.getString(jObject["address"].ToString()));
+            where.Add("txid", SpiderHelper.getString(jObject["txid"].ToString()));
+            MysqlConn.Delete(conn, DataTableName, where);
+
+            MysqlConn.ExecuteDataInsert(conn, DataTableName, slist);
         }
     }
 }

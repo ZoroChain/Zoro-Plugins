@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using Neo.VM;
 using MySql.Data.MySqlClient;
 using Zoro.IO.Json;
+using Zoro.SmartContract;
+using Zoro.Ledger;
+using System.Linq;
 
 namespace Zoro.Plugins
 {
@@ -26,7 +29,7 @@ namespace Zoro.Plugins
             return true;
         }
 
-        public void Save(MySqlConnection conn, JObject jToken, string script)
+        public void Save(MySqlConnection conn, JObject jToken)
         {
             string contract = SpiderHelper.getString(jToken["assetid"].ToString());
             Dictionary<string, string> where = new Dictionary<string, string>();
@@ -34,22 +37,18 @@ namespace Zoro.Plugins
             bool exist = MysqlConn.CheckExist(DataTableName, where);
             if (!exist)
             {
-                Start(conn, contract, script);
+                Start(conn, contract);
             }
         }
 
-        public async void Start(MySqlConnection conn, string contract, string script)
+        public async void Start(MySqlConnection conn, string contract)
         {
-
-            if (script.EndsWith(SpiderHelper.ZoroNativeNep5Call))
-                await getNativeNEP5Asset(conn, UInt160.Parse(contract));
-            else
-                await getNEP5Asset(conn, UInt160.Parse(contract));        
+            getNativeNEP5Asset(conn, UInt160.Parse(contract));
+            getNEP5Asset(conn, UInt160.Parse(contract));        
         }
 
-        public async Task getNativeNEP5Asset(MySqlConnection conn, UInt160 Contract)
+        public void getNativeNEP5Asset(MySqlConnection conn, UInt160 Contract)
         {
-
             try
             {
                 ScriptBuilder sb = new ScriptBuilder();
@@ -59,20 +58,15 @@ namespace Zoro.Plugins
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Symbol", Contract);               
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Decimals", Contract);
 
-                string script = SpiderHelper.Bytes2HexString(sb.ToArray());
-
                 IO.Json.JObject jObject;
 
-                using (WebClient wc = new WebClient())
-                {
-                    wc.Proxy = null;
-                    var url = $"{Settings.Default.RpcUrl}/?jsonrpc=2.0&id=1&method=invokescript&params=['{ChainHash}','{script}']";
-                    var result = await wc.DownloadStringTaskAsync(url);
-                    jObject = IO.Json.JObject.Parse(result);
+                Blockchain blockchain = ZoroChainSystem.Singleton.GetBlockchain(ChainHash); ;
+                ApplicationEngine engine = ApplicationEngine.Run(sb.ToArray(), blockchain, testMode: true);
+                if (engine.State.HasFlag(VMState.FAULT)) {
+                    return;
                 }
 
-                IO.Json.JObject jsonResult = jObject["result"];
-                IO.Json.JArray jStack = jsonResult["stack"] as IO.Json.JArray;
+                JArray jStack = new JArray(engine.ResultStack.Select(p => p.ToParameter().ToJson()));
 
                 string totalSupply = jStack[0]["type"].AsString() == "ByteArray" ? new BigInteger(SpiderHelper.HexString2Bytes(jStack[0]["value"].AsString())).ToString() : jStack[0]["value"].AsString();
                 string name = jStack[1]["type"].AsString() == "ByteArray" ? Encoding.UTF8.GetString(SpiderHelper.HexString2Bytes(jStack[1]["value"].AsString())) : jStack[1]["value"].AsString();
@@ -104,7 +98,7 @@ namespace Zoro.Plugins
             }
         }
 
-        public async Task getNEP5Asset(MySqlConnection conn, UInt160 Contract)
+        public void getNEP5Asset(MySqlConnection conn, UInt160 Contract)
         {            
             try
             {
@@ -115,13 +109,14 @@ namespace Zoro.Plugins
                 sb.EmitAppCall(Contract, "symbol");
                 sb.EmitAppCall(Contract, "decimals");
 
-                JObject jObject;
+                Blockchain blockchain = ZoroChainSystem.Singleton.GetBlockchain(ChainHash); ;
+                ApplicationEngine engine = ApplicationEngine.Run(sb.ToArray(), blockchain, testMode: true);
+                if (engine.State.HasFlag(VMState.FAULT))
+                {
+                    return;
+                }
 
-                var result = await ZoroHelper.InvokeScript(sb.ToArray(), ChainHash.ToString());
-
-                jObject = JObject.Parse(result);
-                JArray jStack = jObject["result"]["stack"] as JArray;
-
+                JArray jStack = new JArray(engine.ResultStack.Select(p => p.ToParameter().ToJson()));
                 
                 string totalSupply = new BigInteger(SpiderHelper.HexString2Bytes(jStack[0]["value"].ToString())).ToString();
                 string name = Encoding.UTF8.GetString(SpiderHelper.HexString2Bytes(jStack[1]["value"].ToString()));

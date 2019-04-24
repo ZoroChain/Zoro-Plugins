@@ -35,33 +35,17 @@ namespace Zoro.Plugins
 
         public void Save(MySqlConnection conn, JObject jObject, uint blockHeight, uint blockTime)
         {
-            JObject result = new JObject();
-            result["txid"] = jObject["txid"];
-            result["size"] = jObject["size"];
-            result["type"] = jObject["type"];
-            result["version"] = jObject["version"];
-            result["attributes"] = jObject["attributes"];
-            result["sys_fee"] = jObject["sys_fee"];
-            result["scripts"] = jObject["scripts"];
-            result["nonce"] = jObject["nonce"];
-            result["blockindex"] = blockHeight;
-            result["gas_limit"] = jObject["gas_limit"];
-            result["gas_price"] = jObject["gas_price"];
-            result["account"] = jObject["account"];
-
             List<string> slist = new List<string>();
-            slist.Add(SpiderHelper.getString(result["txid"].ToString()));
-            slist.Add(SpiderHelper.getString(result["size"].ToString()));
-            slist.Add(SpiderHelper.getString(result["type"].ToString()));
-            slist.Add(SpiderHelper.getString(result["version"].ToString()));
-            slist.Add(SpiderHelper.getString(result["attributes"].ToString()));
-            slist.Add(SpiderHelper.getString(result["sys_fee"].ToString()));
-            slist.Add(SpiderHelper.getString(result["scripts"].ToString()));
-            slist.Add(SpiderHelper.getString(result["nonce"].ToString()));
-            slist.Add(SpiderHelper.getString(result["blockindex"].ToString()));
-            slist.Add(SpiderHelper.getString(result["gas_limit"] == null?"": result["gas_limit"].ToString()));
-            slist.Add(SpiderHelper.getString(result["gas_price"] == null ? "" : result["gas_price"].ToString()));
-            slist.Add(UInt160.Parse(StringRemoveZoro(SpiderHelper.getString(result["account"].ToString())).HexToBytes().Reverse().ToHexString()).ToAddress());
+            slist.Add(SpiderHelper.getString(jObject["txid"].ToString()));
+            slist.Add(SpiderHelper.getString(jObject["size"].ToString()));
+            slist.Add(SpiderHelper.getString(jObject["type"].ToString()));
+            slist.Add(SpiderHelper.getString(jObject["version"].ToString()));
+            slist.Add(SpiderHelper.getString(jObject["attributes"].ToString()));
+            slist.Add(SpiderHelper.getString(jObject["sys_fee"].ToString()));
+            slist.Add(SpiderHelper.getString(jObject["blockindex"].ToString()));
+            slist.Add(SpiderHelper.getString(jObject["gas_limit"] == null?"": jObject["gas_limit"].ToString()));
+            slist.Add(SpiderHelper.getString(jObject["gas_price"] == null ? "" : jObject["gas_price"].ToString()));
+            slist.Add(UInt160.Parse(StringRemoveZoro(SpiderHelper.getString(jObject["account"].ToString())).HexToBytes().Reverse().ToHexString()).ToAddress());
 
             if (jObject["script"] != null)
                 txScriptMethod.Save(conn, SpiderHelper.getString(jObject["script"].ToString()), blockHeight, SpiderHelper.getString(jObject["txid"].ToString()));
@@ -70,7 +54,7 @@ namespace Zoro.Plugins
             {
                 Dictionary<string, string> where = new Dictionary<string, string>();
                 where.Add("txid", SpiderHelper.getString(jObject["txid"].ToString()));
-                where.Add("blockheight", blockHeight.ToString());
+                where.Add("blockindex", blockHeight.ToString());
                 MysqlConn.Delete(conn, DataTableName, where);
             }
             {
@@ -79,12 +63,12 @@ namespace Zoro.Plugins
 
             LogConfig.Log($"SaveTransaction {ChainHash} {blockHeight}", LogConfig.LogLevel.Info, ChainHash.ToString());
 
-            utxo.Save(conn, result, blockHeight);
+            utxo.Save(conn, jObject, blockHeight);
 
-            if (SpiderHelper.getString(result["type"].ToString()) == "InvocationTransaction")
-            {
-                notify.Save(conn, jObject, blockHeight, blockTime, SpiderHelper.getString(jObject["script"].ToString()));
-            }
+            //if (SpiderHelper.getString(jObject["type"].ToString()) == "InvocationTransaction")
+            //{
+            //    notify.Save(conn, jObject, blockHeight, blockTime, SpiderHelper.getString(jObject["script"].ToString()));
+            //}
         }
 
         private string StringRemoveZoro(string hex) {
