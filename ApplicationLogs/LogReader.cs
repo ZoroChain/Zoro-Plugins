@@ -74,6 +74,8 @@ namespace Zoro.Plugins
                     loggers.TryAdd(chainHash, logger);
                     dbs.TryAdd(chainHash, db);
                 }
+
+                PluginManager.Singleton.SendMessage(dbs);
             }
         }
 
