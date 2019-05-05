@@ -26,30 +26,13 @@ namespace Zoro.Plugins
 
         public void Save(MySqlConnection conn, JObject jObject, uint height)
         {
-            JObject result = new JObject();
-            result["hash"] = jObject["hash"];
-            result["size"] = jObject["size"];
-            result["version"] = jObject["version"];
-            result["previousblockhash"] = jObject["previousblockhash"];
-            result["merkleroot"] = jObject["merkleroot"];
-            result["time"] = jObject["time"];
-            result["index"] = jObject["index"];
-            result["nonce"] = jObject["nonce"];
-            result["nextconsensus"] = jObject["nextconsensus"];
-            result["script"] = jObject["script"];
-
             List<string> slist = new List<string>();
             slist.Add(SpiderHelper.getString(jObject["hash"].ToString()));
             slist.Add(SpiderHelper.getString(jObject["size"].ToString()));
             slist.Add(SpiderHelper.getString(jObject["version"].ToString()));
-            slist.Add(SpiderHelper.getString(jObject["previousblockhash"].ToString()));
-            slist.Add(SpiderHelper.getString(jObject["merkleroot"].ToString()));
             slist.Add(SpiderHelper.getString(jObject["time"].ToString()));
             slist.Add(SpiderHelper.getString(jObject["index"].ToString()));
-            slist.Add(SpiderHelper.getString(jObject["nonce"].ToString()));
-            slist.Add(SpiderHelper.getString(jObject["nextconsensus"].ToString()));
             slist.Add(SpiderHelper.getString(jObject["script"].ToString()));
-            slist.Add(SpiderHelper.getString(jObject["tx"].ToString()));
             slist.Add((jObject["tx"] as JArray).Count.ToString());
 
             if (ChainSpider.checkHeight == int.Parse(SpiderHelper.getString(jObject["index"].ToString()))) {
@@ -59,7 +42,7 @@ namespace Zoro.Plugins
             }
             MysqlConn.ExecuteDataInsert(conn, DataTableName, slist);
             
-            uint blockTime = uint.Parse(SpiderHelper.getString(result["time"].ToString()));
+            uint blockTime = uint.Parse(SpiderHelper.getString(jObject["time"].ToString()));
 
             int numTx = 0;
             foreach (var tx in (jObject["tx"] as JArray))

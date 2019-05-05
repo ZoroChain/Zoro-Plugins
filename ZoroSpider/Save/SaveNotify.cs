@@ -56,28 +56,36 @@ namespace Zoro.Plugins
             dbs = db;
         }
 
-        public void Save(MySqlConnection conn, JObject jToken, uint blockHeight, uint blockTime, string script)
+        public void Save(MySqlConnection conn, JObject jToken)
         {
-            JObject result = null;
             JObject executions = null;
             try
             {
-                if (!TryGetDB(ChainHash, out DB db)) return;
-                if (db.IsDisposed) return;
-                UInt256 hash = UInt256.Parse(SpiderHelper.getString(jToken["txid"].ToString()));
-                if (!db.TryGet(ReadOptions.Default, hash.ToArray(), out Slice value))
-                    throw new RpcException(-100, "Unknown transaction");
-                result = JObject.Parse(value.ToString());
-                if (result != null)
-                executions = result["executions"];
+                if (jToken != null) {
+                    executions = jToken["executions"];
+                }
             }
-            catch (Exception e)
-            {
-                LogConfig.Log($"error occured when call getapplicationlog, chain:{ChainHash} height:{blockHeight}, reason:{e.Message}", LogConfig.LogLevel.Error);
-                //throw e;
-            }
+            catch (Exception e) {
 
-            if (result != null && executions != null)
+            }
+            //try
+            //{
+            //    if (!TryGetDB(ChainHash, out DB db)) return;
+            //    if (db.IsDisposed) return;
+            //    UInt256 hash = UInt256.Parse(SpiderHelper.getString(jToken["txid"].ToString()));
+            //    if (!db.TryGet(ReadOptions.Default, hash.ToArray(), out Slice value))
+            //        throw new RpcException(-100, "Unknown transaction");
+            //    result = JObject.Parse(value.ToString());
+            //    if (result != null)
+            //    executions = result["executions"];
+            //}
+            //catch (Exception e)
+            //{
+            //    LogConfig.Log($"error occured when call getapplicationlog, chain:{ChainHash} height:{blockHeight}, reason:{e.Message}", LogConfig.LogLevel.Error);
+            //    //throw e;
+            //}
+
+            if (jToken != null && executions != null)
             {
                 foreach (var execution in executions as JArray) {
                     List<string> slist = new List<string>();
@@ -86,18 +94,12 @@ namespace Zoro.Plugins
                     slist.Add(SpiderHelper.getString(execution["gas_consumed"].ToString()));
                     slist.Add(SpiderHelper.getString(execution["stack"].ToString()));
                     slist.Add(SpiderHelper.getString(execution["notifications"].ToString().Replace(@"[/n/r]", "")));
-                    slist.Add(blockHeight.ToString());
 
-                    if (ChainSpider.checkHeight == int.Parse(blockHeight.ToString()))
-                    {
-                        Dictionary<string, string> where = new Dictionary<string, string>();
-                        where.Add("txid", SpiderHelper.getString(jToken["txid"].ToString()));
-                        where.Add("blockindex", blockHeight.ToString());
-                        MysqlConn.Delete(conn, DataTableName, where);
-                    }
-                    {
-                        MysqlConn.ExecuteDataInsert(conn, DataTableName, slist);
-                    }
+                    Dictionary<string, string> where = new Dictionary<string, string>();
+                    where.Add("txid", SpiderHelper.getString(jToken["txid"].ToString()));
+                    MysqlConn.Delete(conn, DataTableName, where);
+
+                    MysqlConn.ExecuteDataInsert(conn, DataTableName, slist);
 
                     LogConfig.Log($"SaveNotify {ChainHash} {jToken["txid"]}", LogConfig.LogLevel.Info, ChainHash.ToString());
 
@@ -121,11 +123,10 @@ namespace Zoro.Plugins
                             {
                                 JObject nep5 = new JObject();
                                 nep5["assetid"] = contract;
-                                nep5Asset.Save(conn, nep5, script);
+                                nep5Asset.Save(conn, nep5);
 
                                 //存储Nep5Transfer内容
                                 JObject tx = new JObject();
-                                tx["blockindex"] = blockHeight;
                                 tx["txid"] = SpiderHelper.getString(jToken["txid"].ToString());
                                 tx["n"] = 0;
                                 tx["asset"] = contract;
@@ -150,9 +151,9 @@ namespace Zoro.Plugins
                                 JObject j = new JObject();
                                 j["address"] = SpiderHelper.getString(tx["to"].ToString());
                                 j["txid"] = SpiderHelper.getString(tx["txid"].ToString());
-                                address.Save(conn, j, blockHeight, blockTime);
+                                address.Save(conn, j);
                                 addressAsset.Save(conn, SpiderHelper.getString(tx["to"].ToString()), contract, script);
-                                address_tx.Save(conn, j, blockHeight, blockTime);
+                                address_tx.Save(conn, j);
                                 nep5Transfer.Save(conn, tx);
                             }
                         }

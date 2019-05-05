@@ -11,7 +11,7 @@ using Zoro.Persistence;
 
 namespace Zoro.Plugins
 {
-    class ChainSpider : UntypedActor, IDisposable
+    class ChainSpider : IDisposable
     {
         private Task task;
         private SaveBlock block;
@@ -109,21 +109,6 @@ namespace Zoro.Plugins
                 {
                     currentHeight = GetBlock(currentHeight);
                 }
-            }
-        }
-
-        protected override void OnReceive(object message)
-        {
-            // 处理Blockchain发来的消息通知
-            if (message is Blockchain.PersistCompleted e)
-            {
-                //JObject jObject = e.Block.ToJson();
-                //block.Save();                //JObject jObject = e.Block.ToJson();
-                //block.Save();
-            }
-            if (message is Blockchain.ApplicationExecuted log)
-            {
-                
             }
         }
     }

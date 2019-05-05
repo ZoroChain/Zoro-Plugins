@@ -18,7 +18,6 @@ namespace Zoro.Plugins
     public class ZoroSpider : Plugin
     {
         private ConcurrentDictionary<UInt160, IActorRef> spiders = new ConcurrentDictionary<UInt160, IActorRef>();
-        private ConcurrentDictionary<UInt160, DB> dbs = new ConcurrentDictionary<UInt160, DB>();
 
         public override string Name => "ZoroSpider";
 
@@ -58,18 +57,20 @@ namespace Zoro.Plugins
                 // 每次有一条链启动时，打开爬虫文件
                 CreateSpider(started.ChainHash);
             }
-            if (message is ConcurrentDictionary<UInt160, DB> dbs) {
-                SaveNotify.setDBs(dbs);
-            }
             return false;
+        }
+
+        public void RemoveLogger(UInt160 chainHash)
+        {
+            spiders.TryRemove(chainHash, out IActorRef _);
         }
 
         private void CreateSpider(UInt160 chainHash) {
             if (!spiders.ContainsKey(chainHash)) {
-                Blockchain blockchain = ZoroChainSystem.Singleton.GetBlockchain(chainHash);
-                if (blockchain != null) {                    
-                    ChainSpider spider = new ChainSpider(chainHash, blockchain);
-                    spider.Start(-1);
+                ZoroSystem system = ZoroChainSystem.Singleton.GetZoroSystem(chainHash);
+                if (system != null) {
+                    IActorRef logger = system.ActorOf(Spider.Props(this, system.Blockchain, chainHash));
+                    spiders.TryAdd(chainHash, logger);
                 }
             }
 
