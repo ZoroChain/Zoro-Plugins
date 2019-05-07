@@ -9,17 +9,14 @@ namespace Zoro.Plugins
     {
         public string MysqlConfig { get; }
         public string DataBaseName { get; }
-        public string RpcUrl { get; }
         public List<ChainSettings> ChainSettings { get; }
 
-        public string Path { get; }
         public string RelativePath { get; }
 
         public static Settings Default { get; private set; }
 
         private Settings(IConfigurationSection section)
         {
-            this.Path = section.GetSection("Path").Value;
             this.RelativePath = section.GetSection("RelativePath")?.Value ?? "";
 
             IEnumerable<IConfigurationSection> mysql = section.GetSection("MySql").GetChildren();
@@ -32,8 +29,7 @@ namespace Zoro.Plugins
                 this.MysqlConfig += ";";
             }
 
-            DataBaseName = section.GetSection("MySql").GetSection("database").Value;
-            RpcUrl = section.GetSection("RPC").GetSection("url").Value;
+            DataBaseName = section.GetSection("MySql").GetSection("database").Value;          
 
             this.ChainSettings = section.GetSection("Chains").GetChildren().Select(p => new ChainSettings(p)).ToList();
         }

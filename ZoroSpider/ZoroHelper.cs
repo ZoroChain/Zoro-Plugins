@@ -172,43 +172,7 @@ namespace Zoro.Plugins
                 outd[i] = byte.Parse(str.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber);
             }
             return outd;
-        }
-
-        public static async Task<string> InvokeScript(byte[] script, string chainHash)
-        {
-            string scriptPublish = script.ToHexString();
-
-            byte[] postdata;
-            string url;
-            JArray postArray = new JArray();
-            postArray.Add(chainHash);
-            postArray.Add(scriptPublish);
-
-            url = SpiderHelper.MakeRpcUrlPost(Settings.Default.RpcUrl, "invokescript", out postdata, postArray);
-
-            string result = "";
-            try
-            {
-                result = await SpiderHelper.HttpPost(url, postdata);
-
-            }
-            catch (Exception)
-            {
-            }
-
-            return result;
-        }
-
-        public static async Task<decimal> GetScriptGasConsumed(byte[] script, string chainHash)
-        {
-            var info = await InvokeScript(script, chainHash);
-
-            JObject json_result_array = JObject.Parse(info) as JObject;
-            JObject json_result_obj = json_result_array["result"] as JObject;
-
-            var consume = json_result_obj["gas_consumed"].ToString();
-            return decimal.Parse(consume);
-        }
+        }        
 
         public static InvocationTransaction MakeTransaction(byte[] script, KeyPair keypair, Fixed8 gasLimit, Fixed8 gasPrice)
         {
@@ -257,45 +221,7 @@ namespace Zoro.Plugins
 
             AddWitness(tx, signatures, m, pubkeys);
             return tx;
-        }
-
-        public static async Task<string> SendRawTransaction(string rawdata, string chainHash)
-        {
-            string url;
-            byte[] postdata;
-
-            JArray postRawArray = new JArray();
-            postRawArray.Add(chainHash);
-            postRawArray.Add(rawdata);
-
-            url = SpiderHelper.MakeRpcUrlPost(Settings.Default.RpcUrl, "sendrawtransaction", out postdata, postRawArray);
-
-            string result = "";
-            try
-            {
-                result = await SpiderHelper.HttpPost(url, postdata);
-
-            }
-            catch (Exception)
-            {
-                //Console.WriteLine(e.Message);
-            }
-
-            return result;
-        }
-
-        public static async Task<string> SendInvocationTransaction(byte[] script, KeyPair keypair, string chainHash, Fixed8 gasLimit, Fixed8 gasPrice)
-        {
-            InvocationTransaction tx = MakeTransaction(script, keypair, gasLimit, gasPrice);
-
-            return await SendRawTransaction(tx.ToArray().ToHexString(), chainHash);
-        }
-
-        public static async Task<string> SendInvocationTransaction(byte[] script, int m, KeyPair[] keypairs, string chainHash, Fixed8 gasLimit, Fixed8 gasPrice)
-        {
-            InvocationTransaction tx = MakeMultiSignatureTransaction(script, m, keypairs, gasLimit, gasPrice);
-
-            return await SendRawTransaction(tx.ToArray().ToHexString(), chainHash);
-        }
+        }       
+       
     }
 }

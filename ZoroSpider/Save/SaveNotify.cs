@@ -61,11 +61,13 @@ namespace Zoro.Plugins
             JObject executions = null;
             try
             {
-                if (jToken != null) {
+                if (jToken != null)
+                {
                     executions = jToken["executions"];
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
 
             }
             //try
@@ -87,7 +89,8 @@ namespace Zoro.Plugins
 
             if (jToken != null && executions != null)
             {
-                foreach (var execution in executions as JArray) {
+                foreach (var execution in executions as JArray)
+                {
                     List<string> slist = new List<string>();
                     slist.Add(SpiderHelper.getString(jToken["txid"].ToString()));
                     slist.Add(SpiderHelper.getString(execution["vmstate"].ToString()));
@@ -152,13 +155,13 @@ namespace Zoro.Plugins
                                 j["address"] = SpiderHelper.getString(tx["to"].ToString());
                                 j["txid"] = SpiderHelper.getString(tx["txid"].ToString());
                                 address.Save(conn, j);
-                                addressAsset.Save(conn, SpiderHelper.getString(tx["to"].ToString()), contract, script);
+                                addressAsset.Save(conn, SpiderHelper.getString(tx["to"].ToString()), contract, "");
                                 address_tx.Save(conn, j);
                                 nep5Transfer.Save(conn, tx);
                             }
                         }
                     }
-                }                
+                }
             }
         }
     }

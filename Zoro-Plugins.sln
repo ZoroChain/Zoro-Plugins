@@ -32,7 +32,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RpcSecurity", "RpcSecurity\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zoro-Cli", "..\Zoro-Cli\zoro-cli\Zoro-Cli.csproj", "{06B3C8DF-B66D-40F9-835C-684B4C73B967}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Spider", "Spider\Spider.csproj", "{614644F5-EB6F-4E67-A92D-280040DC58EE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Spider", "ZoroSpider\Spider.csproj", "{614644F5-EB6F-4E67-A92D-280040DC58EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

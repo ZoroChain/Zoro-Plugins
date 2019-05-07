@@ -1,61 +1,95 @@
 ﻿using Akka.Actor;
+using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Collections.Concurrent;
+using System.Linq;
+using Zoro.IO.Data.LevelDB;
 using Zoro.IO.Json;
+using Zoro.Network.RPC;
+using Zoro.Network.P2P;
+using System.IO;
 using Zoro.Ledger;
+using Zoro.Persistence;
+using Zoro.Network.P2P.Payloads;
+using System.Text.RegularExpressions;
 
 namespace Zoro.Plugins
 {
-    class Spider : UntypedActor
+    public class ZoroSpider : Plugin
     {
-        private Dictionary<UInt160, TransactionDal> tranList = new Dictionary<UInt160, TransactionDal>();
-        private SaveBlock saveBlock = null;
-        private SaveNotify saveNotify = null;
-        private SaveTransaction saveTransaction = null;
+        private ConcurrentDictionary<UInt160, IActorRef> spiders = new ConcurrentDictionary<UInt160, IActorRef>();
 
-        private ZoroSpider spider = null;
-        private UInt160 chainHash = null;
+        public override string Name => "Spider";
 
-        private Spider(ZoroSpider zoroSpider, IActorRef blockchain, UInt160 chainHash) {
-            this.spider = zoroSpider;
-            this.chainHash = chainHash;
-
-            saveBlock = new SaveBlock(chainHash);
-            saveNotify = new SaveNotify(chainHash);
-            saveTransaction = new SaveTransaction(chainHash);
-            // 注册Blockchain的分发事件
-            blockchain.Tell(new Blockchain.Register());
+        public ZoroSpider(PluginManager pluginMgr)
+            : base(pluginMgr)
+        {
         }
 
-        protected override void PostStop()
+        public override void Configure()
         {
-            spider.RemoveLogger(chainHash);
+            Settings.Load(GetConfiguration());
+            System.Net.ServicePointManager.DefaultConnectionLimit = 512;
+
+            AppDomain.CurrentDomain.UnhandledException += LogConfig.CurrentDomain_UnhandledException;
+
+            ProjectInfo.head();
+
+            MysqlConn.conf = Settings.Default.MysqlConfig;
+            MysqlConn.dbname = Settings.Default.DataBaseName;
+
+            ProjectInfo.tail();
         }
 
-        protected override void OnReceive(object message)
+        public override void Dispose()
         {
-            TransactionDal tran = null;
-            if (message is Blockchain.ApplicationExecuted log) {              
-                tran.BeginTransaction();
-                foreach (var notify in log.ExecutionResults) {
-                    saveNotify.Save(tran.conn, JObject.Parse(notify.ToString()));
+            var actors = spiders.Select(p => p.Value).ToArray();
+            foreach (var actor in actors)
+            {
+                ZoroChainSystem.Singleton.ActorSystem.Stop(actor);
+            }
+        }
+
+        public override bool OnMessage(object message)
+        {
+            if (message is ZoroSystem.ChainStarted started)
+            {
+                // 每次有一条链启动时，打开爬虫文件
+                CreateSpider(started.ChainHash);
+            }
+            return false;
+        }
+
+        public void RemoveLogger(UInt160 chainHash)
+        {
+            spiders.TryRemove(chainHash, out IActorRef _);
+        }
+
+        private void CreateSpider(UInt160 chainHash)
+        {
+            if (!spiders.ContainsKey(chainHash))
+            {
+                ZoroSystem system = ZoroChainSystem.Singleton.GetZoroSystem(chainHash);
+                if (system != null)
+                {
+                    IActorRef logger = system.ActorOf(Spider.Props(this, system.Blockchain, chainHash));
+                    spiders.TryAdd(chainHash, logger);
                 }
-                tran.CommitTransaction();
-                tran.DisposeTransaction();
             }
-            else if (message is Blockchain.PersistCompleted block) {
-                tran.BeginTransaction();
-                JObject jObject = block.Block.ToJson();
-                saveBlock.Save(tran.conn, jObject, block.Block.Index);
-                tran.CommitTransaction();
-                tran.DisposeTransaction();
-            }
-        }
 
-        public static Props Props(ZoroSpider spider, IActorRef blockchain, UInt160 chainHash)
-        {
-            return Akka.Actor.Props.Create(() => new Spider(spider, blockchain, chainHash));
+            TransactionDal tran = new TransactionDal();
+            try
+            {
+                tran.BeginTransaction();
+                AppChainListSpider appChainListSpider = new AppChainListSpider();
+                appChainListSpider.Start(tran.conn);
+                tran.CommitTransaction();
+            }
+            catch (Exception e)
+            {
+                tran.RollbackTransaction();
+                throw e;
+            }
         }
     }
 }

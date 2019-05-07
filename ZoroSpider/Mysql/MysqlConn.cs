@@ -32,29 +32,30 @@ namespace Zoro.Plugins
         public static void CreateTable(string type, string tableName)
         {
             string createSql = "";
-            switch (type) {
+            switch (type)
+            {
                 case TableType.Block:
-                    createSql = "create table "+tableName+" (id bigint(20) primary key auto_increment, hash varchar(255), size varchar(255), version varchar(255)," +
+                    createSql = "create table " + tableName + " (id bigint(20) primary key auto_increment, hash varchar(255), size varchar(255), version varchar(255)," +
                 " time int(11), indexx int(11), script varchar(2048), txcount varchar(45))";
                     break;
                 case TableType.Address:
-                    createSql = "create table "+tableName+" (id int(11) primary key auto_increment, addr varchar(255)," +
+                    createSql = "create table " + tableName + " (id int(11) primary key auto_increment, addr varchar(255)," +
                 " firsttxid varchar(255), lasttxid varchar(255), txcount int(11))";
                     break;
                 case TableType.Address_tx:
-                    createSql = "create table "+tableName+" (id int(11) primary key auto_increment, addr varchar(255)," +
+                    createSql = "create table " + tableName + " (id int(11) primary key auto_increment, addr varchar(255)," +
                 " txid varchar(255))";
                     break;
                 case TableType.Transaction:
-                    createSql = "create table "+tableName+" (id int(11) primary key auto_increment, txid varchar(255)," +
+                    createSql = "create table " + tableName + " (id int(11) primary key auto_increment, txid varchar(255)," +
                 " size int(11), type varchar(45), version tinyint(3), attributes varchar(2048)," +
                 " sys_fee int(11), blockindex varchar(45), gas_limit varchar(45), gas_price varchar(45), account varchar(255))";
                     break;
                 case TableType.Notify:
-                    createSql = "create table "+tableName+" (id bigint(20) primary key auto_increment, txid varchar(255), vmstate varchar(255), gas_consumed varchar(255)," +
+                    createSql = "create table " + tableName + " (id bigint(20) primary key auto_increment, txid varchar(255), vmstate varchar(255), gas_consumed varchar(255)," +
                 " stack varchar(2048))";
                     break;
-                case TableType.NEP5Asset:                    
+                case TableType.NEP5Asset:
                     createSql = "create table " + tableName + " (id int(11) primary key auto_increment, assetid varchar(150), totalsupply varchar(45)," +
                 " name varchar(150), symbol varchar(150), decimals varchar(45))";
                     break;
@@ -92,7 +93,7 @@ namespace Zoro.Plugins
                     {
                         cmd.ExecuteNonQuery();
                     }
-                    
+
                     LogConfig.Log("建表成功 " + tableName, LogConfig.LogLevel.Info);
                 }
                 catch (Exception e)
@@ -101,14 +102,15 @@ namespace Zoro.Plugins
                     throw e;
                 }
                 finally
-                {                   
+                {
                     conn.Close();
                     AlterTable(type, tableName);
                 }
             }
         }
 
-        public static void AlterTable(string type, string tableName) {
+        public static void AlterTable(string type, string tableName)
+        {
             string alterSql = "";
             switch (type)
             {
@@ -292,14 +294,15 @@ namespace Zoro.Plugins
                 MySqlCommand command = new MySqlCommand(update, conn);
                 command.ExecuteNonQuery();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 LogConfig.Log($"Error when execute update with {tableName}, reason: {e.Message}", LogConfig.LogLevel.Error);
                 throw e;
             }
         }
 
-        public static void Delete(MySqlConnection conn, string tableName, Dictionary<string, string> where) {
+        public static void Delete(MySqlConnection conn, string tableName, Dictionary<string, string> where)
+        {
             return;
             try
             {
@@ -324,7 +327,8 @@ namespace Zoro.Plugins
             }
         }
 
-        public static void SaveAndUpdataHashList(MySqlConnection conn, string table, string hashlist) {
+        public static void SaveAndUpdataHashList(MySqlConnection conn, string table, string hashlist)
+        {
             var dir = new Dictionary<string, string>();
             DataTable dt = ExecuteDataSet(table, dir).Tables[0];
             if (dt.Rows.Count == 0)
@@ -333,7 +337,8 @@ namespace Zoro.Plugins
                 list.Add(hashlist);
                 ExecuteDataInsert(conn, table, list);
             }
-            else {
+            else
+            {
                 var set = new Dictionary<string, string>();
                 set.Add("hashlist", hashlist);
                 Update(conn, table, set, dir);
@@ -363,7 +368,8 @@ namespace Zoro.Plugins
         }
     }
 
-    class TableType {
+    class TableType
+    {
         public const string Block = "block";
         public const string Address = "address";
         public const string Address_tx = "address_tx";
